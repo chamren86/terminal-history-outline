@@ -1,6 +1,23 @@
-out
-dist
-node_modules
+# Compiled output
+out/
+node_modules/
+
+# VS Code
 .vscode-test/
 *.vsix
+.vscode/.ropeproject
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
 FEATURES.md
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/

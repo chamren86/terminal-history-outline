@@ -1,15 +1,21 @@
 import * as vscode from 'vscode';
 import { TerminalHistoryProvider, CommandHistoryItem } from './terminalHistoryProvider';
 
-export function activate(context: vscode.ExtensionContext) {
-    console.log('Terminal History Outline extension is now active!');
+let currentHistoryProvider: TerminalHistoryProvider | undefined;
 
-    // Create the tree data provider
-    const historyProvider = new TerminalHistoryProvider(context);
+export function activate(context: vscode.ExtensionContext) {
+    initializeExtension(context);
+}
+
+function initializeExtension(context: vscode.ExtensionContext) {
+    if (currentHistoryProvider) {
+        currentHistoryProvider.clearHistory();
+    }
     
-    // Register the tree view
+    currentHistoryProvider = new TerminalHistoryProvider(context);
+    
     const treeView = vscode.window.createTreeView('terminalHistoryOutline', {
-        treeDataProvider: historyProvider,
+        treeDataProvider: currentHistoryProvider,
         showCollapseAll: true
     });
     
@@ -17,8 +23,10 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Register commands
     const clearCommand = vscode.commands.registerCommand('terminalHistory.clear', () => {
-        historyProvider.clearHistory();
-        vscode.window.showInformationMessage('Terminal history cleared');
+        if (currentHistoryProvider) {
+            currentHistoryProvider.clearHistory();
+            vscode.window.showInformationMessage('Terminal history cleared');
+        }
     });
     
     const rerunCommand = vscode.commands.registerCommand('terminalHistory.rerun', (item: CommandHistoryItem) => {
@@ -38,13 +46,15 @@ export function activate(context: vscode.ExtensionContext) {
     
     context.subscriptions.push(clearCommand, rerunCommand, copyOutputCommand);
     
-    // Listen for terminal commands and outputs
-    const startDisposable = vscode.window.onDidStartTerminalShellExecution(async (event) => {
-        const commandLine = event.execution.commandLine.value;
+    // Listen for terminal commands and capture output
+    const startDisposable = vscode.window.onDidStartTerminalShellExecution((event) => {
+        let commandLine = event.execution.commandLine.value;
         const terminalName = event.terminal.name;
         const timestamp = new Date();
         
-        // Get current working directory if available
+        commandLine = commandLine.replace(/ --color=auto/g, '');
+        commandLine = commandLine.replace(/ --color/g, '');
+        
         let cwd = '';
         try {
             const shellIntegration = event.terminal as any;
@@ -55,55 +65,54 @@ export function activate(context: vscode.ExtensionContext) {
             // CWD not available
         }
         
-        // Create new history item
-        const historyItem = new CommandHistoryItem(
-            commandLine,
-            terminalName,
-            timestamp,
-            cwd
-        );
+        const historyItem = new CommandHistoryItem(commandLine, terminalName, timestamp, cwd);
         
-        // Add to provider immediately (shows as running)
-        historyProvider.addCommand(historyItem);
-        
-        // Capture the output
-        let fullOutput = '';
-        try {
-            for await (const data of event.execution.read()) {
-                fullOutput += data;
-            }
-            historyItem.output = fullOutput;
-            // Note: exitCode might not be available in all VS Code versions
-            if ((event.execution as any).exitCode !== undefined) {
-                historyItem.exitCode = (event.execution as any).exitCode;
-            }
-            historyProvider.updateCommand(historyItem);
-        } catch (error) {
-            console.error('Failed to capture command output:', error);
-            historyItem.output = `[Error capturing output: ${error}]`;
-            historyProvider.updateCommand(historyItem);
+        if (currentHistoryProvider) {
+            currentHistoryProvider.addCommand(historyItem);
         }
+        
+        // Capture output asynchronously
+        const outputPromise = new Promise<string>(async (resolve) => {
+            let output = '';
+            try {
+                for await (const data of event.execution.read()) {
+                    output += data;
+                }
+                resolve(output);
+            } catch (error) {
+                resolve(`[Error capturing output: ${error}]`);
+            }
+        });
+        
+        outputPromise.then((fullOutput) => {
+            historyItem.output = fullOutput;
+            
+            const hasError = /error|fail|exception|not found|permission denied|No such file|command not found|EACCES|ENOENT/i.test(fullOutput);
+            historyItem.exitCode = hasError ? 1 : 0;
+            
+            if (currentHistoryProvider) {
+                currentHistoryProvider.updateCommand(historyItem);
+            }
+        });
     });
     
-    // Listen for terminal closures to mark sessions as ended
-    const closeDisposable = vscode.window.onDidCloseTerminal((terminal) => {
-        historyProvider.markTerminalClosed(terminal.name);
-    });
+    context.subscriptions.push(startDisposable);
     
-    context.subscriptions.push(startDisposable, closeDisposable);
-    
-    // Add status bar item showing command count
+    // Status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     const updateStatusBar = () => {
-        statusBarItem.text = `$(history) ${historyProvider.getCommandCount()}`;
+        if (currentHistoryProvider) {
+            statusBarItem.text = `$(history) ${currentHistoryProvider.getCommandCount()}`;
+        }
     };
     statusBarItem.tooltip = 'Terminal History Outline';
     statusBarItem.show();
     updateStatusBar();
     context.subscriptions.push(statusBarItem);
     
-    // Update status bar when history changes
-    historyProvider.onDidChangeTreeData(updateStatusBar);
+    if (currentHistoryProvider) {
+        currentHistoryProvider.onDidChangeTreeData(updateStatusBar);
+    }
 }
 
 export function deactivate() {}

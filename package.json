@@ -1,48 +1,20 @@
 {
   "name": "terminal-history-outline",
   "displayName": "Terminal History Outline",
-  "description": "Extension to allow easier navigation of your terminal history",
-  "version": "0.0.1",
+  "description": "View and manage terminal command history in the Explorer outline view",
+  "version": "0.2.0",
   "engines": {
-    "vscode": "^1.120.0"
+    "vscode": "^1.93.0"
   },
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [
+    "onView:terminalHistoryOutline",
     "onStartupFinished"
   ],
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile"
-  },
   "main": "./out/extension.js",
   "contributes": {
-    "configuration": {
-      "title": "Terminal History Outline",
-      "properties": {
-        "terminalHistory.maxHistorySize": {
-          "type": "number",
-          "default": 100,
-          "description": "Maximum number of commands to keep in history"
-        },
-        "terminalHistory.autoSaveOutput": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically save command outputs to disk"
-        },
-        "terminalHistory.groupBy": {
-          "type": "string",
-          "enum": [
-            "day",
-            "terminal",
-            "cwd",
-            "none"
-          ],
-          "default": "none",
-          "description": "How to group commands in the outline view"
-        }
-      }
-    },
     "views": {
       "explorer": [
         {
@@ -89,11 +61,33 @@
           "group": "inline"
         }
       ]
+    },
+    "configuration": {
+      "title": "Terminal History Outline",
+      "properties": {
+        "terminalHistory.maxHistorySize": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of commands to keep in history"
+        }
+      }
     }
   },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
   "devDependencies": {
-    "@types/node": "^25.9.3",
-    "@types/vscode": "^1.120.0",
-    "typescript": "^6.0.3"
-  }
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.93.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chamren86/terminal-history-outline.git"
+  },
+  "author": "chamren86",
+  "license": "MIT",
+  "publisher": "chamren86"
 }
