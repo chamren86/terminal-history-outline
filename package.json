@@ -1,0 +1,99 @@
+{
+  "name": "terminal-history-outline",
+  "displayName": "Terminal History Outline",
+  "description": "Extension to allow easier navigation of your terminal history",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.120.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Terminal History Outline",
+      "properties": {
+        "terminalHistory.maxHistorySize": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of commands to keep in history"
+        },
+        "terminalHistory.autoSaveOutput": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically save command outputs to disk"
+        },
+        "terminalHistory.groupBy": {
+          "type": "string",
+          "enum": [
+            "day",
+            "terminal",
+            "cwd",
+            "none"
+          ],
+          "default": "none",
+          "description": "How to group commands in the outline view"
+        }
+      }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "terminalHistoryOutline",
+          "name": "Terminal History",
+          "icon": "$(history)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "terminalHistory.clear",
+        "title": "Clear Terminal History",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "terminalHistory.rerun",
+        "title": "Rerun Command",
+        "icon": "$(run)"
+      },
+      {
+        "command": "terminalHistory.copyOutput",
+        "title": "Copy Output",
+        "icon": "$(copy)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "terminalHistory.clear",
+          "when": "view == terminalHistoryOutline",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "terminalHistory.rerun",
+          "when": "viewItem == commandItem",
+          "group": "inline"
+        },
+        {
+          "command": "terminalHistory.copyOutput",
+          "when": "viewItem == commandItem",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/vscode": "^1.120.0",
+    "typescript": "^6.0.3"
+  }
+}
