@@ -10,7 +10,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:terminalHistoryOutline",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
