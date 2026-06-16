@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { cleanTerminalOutput } from './cleaner';
+import { cleanTerminalOutput } from './cleaner.js';
 
 export class CommandHistoryItem extends vscode.TreeItem {
     private rawOutput: string = '';

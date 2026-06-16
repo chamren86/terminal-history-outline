@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TerminalHistoryProvider, CommandHistoryItem } from './terminalHistoryProvider';
+import { TerminalHistoryProvider, CommandHistoryItem } from './terminalHistoryProvider.js';
 
 let currentHistoryProvider: TerminalHistoryProvider | undefined;
 
