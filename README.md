@@ -1,8 +1,9 @@
 # Terminal History Outline
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.93%2B-blue.svg)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-12%20passing-brightgreen.svg)](https://github.com/chamren86/terminal-history-outline)
 
 View and manage your terminal command history directly in the VS Code Explorer outline view. Never lose track of what commands you've run or their outputs again!
 
@@ -12,7 +13,7 @@ View and manage your terminal command history directly in the VS Code Explorer o
 - Automatically captures every command you run in VS Code terminals
 - Stores both commands and their full output
 - Persists history across VS Code sessions
-- Configurable history size (default: 100 commands)
+- Configurable history size (default: 100)
 
 ### 🎯 Visual Status Indicators
 - 🟢 **Green** - Command succeeded (exit code 0)

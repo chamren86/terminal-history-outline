@@ -2,7 +2,7 @@
   "name": "terminal-history-outline",
   "displayName": "Terminal History Outline",
   "description": "View and manage terminal command history in the Explorer outline view",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.93.0"
   },
