@@ -3,7 +3,7 @@
   "type": "module",
   "displayName": "Terminal History Outline",
   "description": "View and manage terminal command history in the Explorer outline view",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -39,12 +39,27 @@
         "command": "terminalHistory.copyOutput",
         "title": "Copy Output",
         "icon": "$(copy)"
+      },
+      {
+        "command": "terminalHistory.privacyDashboard",
+        "title": "Privacy Dashboard",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "terminalHistory.clearSensitive",
+        "title": "Clear Sensitive Commands",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "terminalHistory.clear",
+          "when": "view == terminalHistoryOutline",
+          "group": "navigation"
+        },
+        {
+          "command": "terminalHistory.privacyDashboard",
           "when": "view == terminalHistoryOutline",
           "group": "navigation"
         }
@@ -69,6 +84,43 @@
           "type": "number",
           "default": 100,
           "description": "Maximum number of commands to keep in history"
+        },
+        "terminalHistory.security.detectionEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable sensitive data detection in commands"
+        },
+        "terminalHistory.security.redactionLevel": {
+          "type": "string",
+          "enum": [
+            "off",
+            "warn",
+            "redact",
+            "block"
+          ],
+          "default": "warn",
+          "description": "How to handle sensitive data: off (ignore), warn (show warning), redact (replace with [REDACTED]), block (don't save)"
+        },
+        "terminalHistory.security.warnOnDetection": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show warning notification when sensitive data is detected"
+        },
+        "terminalHistory.security.customPatterns": {
+          "type": "array",
+          "default": [],
+          "description": "Custom regex patterns for detecting sensitive data",
+          "items": {
+            "type": "string"
+          }
+        },
+        "terminalHistory.security.excludedCommands": {
+          "type": "array",
+          "default": [],
+          "description": "Commands matching these patterns will not be saved (regex supported)",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }
