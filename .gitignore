@@ -24,4 +24,4 @@ coverage/
 # Test configuration (local only)
 test-mocha-config.json
 
-ROADMAP/
+ROADMAP/bin/
