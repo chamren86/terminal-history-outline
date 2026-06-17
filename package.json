@@ -3,7 +3,7 @@
   "type": "module",
   "displayName": "Terminal History Outline",
   "description": "View and manage terminal command history in the Explorer outline view",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -129,14 +129,23 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "npm run compile && mocha --loader=ts-node/esm --ui bdd 'out/test/unit/**/*Test.js'"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "./scripts/unit-test.sh",
+    "test:full": "./scripts/test.sh",
+    "test:act": "act -j test --pull=false",
+    "precommit": "./scripts/precommit.sh",
+    "prepush": "./scripts/prepush.sh"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.93.0",
+    "mocha": "^10.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
+    "tsx": "^4.22.4",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "strip-ansi": "^7.1.0"

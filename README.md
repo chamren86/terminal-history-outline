@@ -1,55 +1,123 @@
 # Terminal History Outline
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.93%2B-blue.svg)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-12%20passing-brightgreen.svg)](https://github.com/chamren86/terminal-history-outline)
 
-View and manage your terminal command history directly in the VS Code Explorer outline view. Never lose track of what commands you've run or their outputs again!
+View and manage your terminal command history directly in the VS Code Explorer outline view.
 
 ## Features
 
-### 📝 Command History
-- Automatically captures every command you run in VS Code terminals
-- Stores both commands and their full output
-- Persists history across VS Code sessions
-- Configurable history size (default: 100)
-
-### 🎯 Visual Status Indicators
-- 🟢 **Green** - Command succeeded (exit code 0)
-- 🔴 **Red** - Command failed (non-zero exit code)
-- 🟡 **Yellow** - Command is currently running
-
-### 🔧 Actions
-- **Rerun** any command with one click
-- **Copy** command output to clipboard
-- **Clear** entire history
-- **Expand** any command to view its full output
-
-### 🎨 Clean Display
-- Automatically strips ANSI color codes
-- Removes VS Code shell integration sequences
-- Shows clean, readable command output
-- Displays relative timestamps (e.g., "5s ago", "2m ago")
+- 📝 **Command History** - Automatically captures every command and its output
+- 🟢/🔴/🟡 **Status Indicators** - Shows success, failure, or running status
+- 🔧 **Actions** - Rerun commands, copy output, clear history
+- 🔒 **Security** - Detects and redacts passwords, API keys, and tokens (v0.4.0)
+- 🎨 **Clean Display** - Strips ANSI codes and shows clean output
+- 💾 **Persistent** - History survives VS Code restarts
 
 ## Installation
 
-### From VS Code Marketplace (Coming Soon)
-1. Open VS Code
-2. Go to Extensions (Ctrl+Shift+X)
-3. Search for "Terminal History Outline"
-4. Click Install
+From VS Code: Search for "Terminal History Outline" in the Extensions view (Ctrl+Shift+X).
 
-### Manual Installation
-1. Download the `.vsix` file from [Releases](https://github.com/chamren86/terminal-history-outline/releases)
-2. In VS Code, go to Extensions (Ctrl+Shift+X)
-3. Click the `...` menu → "Install from VSIX..."
-4. Select the downloaded file
+Or from source:
 
-### From Source
-```bash
-git clone https://github.com/chamren86/terminal-history-outline.git
-cd terminal-history-outline
-npm install
-npm run compile
-# Press F5 to launch extension development host
+`git clone https://github.com/chamren86/terminal-history-outline.git`
+`cd terminal-history-outline`
+`npm install`
+`npm run compile`
+
+Press F5 to launch the extension in a development window.
+
+## Usage
+
+1. Open a terminal (`` Ctrl+` ``)
+2. Run any command - it appears in the Terminal History view (Explorer sidebar)
+3. Click a command to see its output
+4. Right-click for actions: Rerun, Copy Output
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `Clear Terminal History` | Clear all saved commands |
+| `Rerun Command` | Re-run the selected command |
+| `Copy Output` | Copy command output to clipboard |
+| `Privacy Dashboard` | View and manage security settings |
+
+## Configuration
+
+VS Code settings (`Ctrl+,`):
+
+`terminalHistory.maxHistorySize`: 100
+`terminalHistory.security.detectionEnabled`: true
+`terminalHistory.security.redactionLevel`: "warn"
+`terminalHistory.security.excludedCommands`: []
+
+## Development
+
+`npm install` - Install dependencies
+`npm run watch` - Compile in watch mode
+`npm test` - Run tests
+`npm run test:unit` - Quick tests
+`npm run precommit` - Test before committing
+`npm run prepush` - Full validation before pushing
+
+### Test Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm test` | Run all unit tests |
+| `npm run test:unit` | Quick tests (fast) |
+| `npm run test:full` | Full suite with clean install |
+| `npm run precommit` | Test uncommitted changes |
+| `npm run prepush` | Full validation |
+
+### Project Structure
+
+src/
+├── cleaner.ts              # ANSI cleaning
+├── extension.ts            # Extension activation
+├── security.ts             # Security module
+├── terminalHistoryProvider.ts # Tree provider
+└── test/                   # Unit tests
+
+## Requirements
+
+- VS Code 1.93+
+- Shell Integration enabled (default: on)
+
+## Roadmap
+
+**v0.4.0** (Current) - Security & Privacy ✅
+**v0.5.0** - Improved Output Cleaning
+**v0.6.0** - Search & Filter
+**v1.0.0** - Production Release
+
+[Full Roadmap](docs/FEATURES.md)
+
+## Release Notes
+
+### v0.4.0 - Security & Privacy
+- 🔒 Sensitive data detection (passwords, API keys, tokens)
+- 🔒 Auto-redaction with `[REDACTED]`
+- 📊 Privacy dashboard
+- ✅ 49 passing tests
+
+### v0.3.0 - Testing Infrastructure
+- ✅ Mocha test framework with 49 tests
+- ✅ Cleaner module with no VS Code dependencies
+
+### v0.2.0 - Stable Release
+- 🟢 Colored status indicators
+- 📝 Command output capture
+- 🔄 Rerun and copy actions
+
+[Full Release Notes](RELEASE-NOTES.md)
+
+## License
+
+MIT © [chamren86](https://github.com/chamren86)
+
+---
+
+**Enjoy tracking your terminal history!** 🚀
