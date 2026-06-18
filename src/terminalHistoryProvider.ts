@@ -2,6 +2,12 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { cleanTerminalOutput } from './cleaner.js';
+import {
+    CONTEXT_VALUES,
+    MAX_OUTPUT_PREVIEW_LENGTH,
+    MAX_OUTPUT_DISPLAY_LENGTH,
+    MAX_HISTORY_SIZE
+} from './constants/index.js';
 
 export class CommandHistoryItem extends vscode.TreeItem {
     private rawOutput: string = '';
@@ -20,10 +26,13 @@ export class CommandHistoryItem extends vscode.TreeItem {
         this.rawOutput = output;
         this.cleanOutput = cleanTerminalOutput(output);
         
-        this.tooltip = `${commandText}\nTerminal: ${terminalName}\nTime: ${timestamp.toLocaleString()}\nCWD: ${cwd || 'unknown'}\nExit Code: ${exitCode === null ? 'running' : exitCode}\n\nOutput:\n${this.cleanOutput.substring(0, 500)}${this.cleanOutput.length > 500 ? '...' : ''}`;
+        const outputPreview = this.cleanOutput.substring(0, MAX_OUTPUT_PREVIEW_LENGTH);
+        const isTruncated = this.cleanOutput.length > MAX_OUTPUT_PREVIEW_LENGTH;
+        
+        this.tooltip = `${commandText}\nTerminal: ${terminalName}\nTime: ${timestamp.toLocaleString()}\nCWD: ${cwd || 'unknown'}\nExit Code: ${exitCode === null ? 'running' : exitCode}\n\nOutput:\n${outputPreview}${isTruncated ? '...' : ''}`;
         
         this.applyStatusStyling();
-        this.contextValue = 'commandItem';
+        this.contextValue = CONTEXT_VALUES.COMMAND_ITEM;
     }
     
     private applyStatusStyling() {
@@ -48,7 +57,11 @@ export class CommandHistoryItem extends vscode.TreeItem {
     public set output(value: string) {
         this.rawOutput = value;
         this.cleanOutput = cleanTerminalOutput(value);
-        this.tooltip = `${this.commandText}\nTerminal: ${this.terminalName}\nTime: ${this.timestamp.toLocaleString()}\nCWD: ${this.cwd || 'unknown'}\nExit Code: ${this.exitCode === null ? 'running' : this.exitCode}\n\nOutput:\n${this.cleanOutput.substring(0, 500)}${this.cleanOutput.length > 500 ? '...' : ''}`;
+        
+        const outputPreview = this.cleanOutput.substring(0, MAX_OUTPUT_PREVIEW_LENGTH);
+        const isTruncated = this.cleanOutput.length > MAX_OUTPUT_PREVIEW_LENGTH;
+        
+        this.tooltip = `${this.commandText}\nTerminal: ${this.terminalName}\nTime: ${this.timestamp.toLocaleString()}\nCWD: ${this.cwd || 'unknown'}\nExit Code: ${this.exitCode === null ? 'running' : this.exitCode}\n\nOutput:\n${outputPreview}${isTruncated ? '...' : ''}`;
         this.applyStatusStyling();
     }
     
@@ -74,15 +87,15 @@ export class CommandHistoryItem extends vscode.TreeItem {
 class OutputTreeItem extends vscode.TreeItem {
     constructor(output: string, exitCode: number | null, commandText: string) {
         const cleanOutput = cleanTerminalOutput(output);
-        const truncated = cleanOutput.length > 1000 
-            ? cleanOutput.substring(0, 1000) + '...\n\n(Output truncated, use Copy to get full output)' 
+        const truncated = cleanOutput.length > MAX_OUTPUT_DISPLAY_LENGTH 
+            ? cleanOutput.substring(0, MAX_OUTPUT_DISPLAY_LENGTH) + '...\n\n(Output truncated, use Copy to get full output)' 
             : (cleanOutput || '(no output captured)');
         
         super(truncated, vscode.TreeItemCollapsibleState.None);
         
         this.tooltip = cleanOutput || 'No output captured';
         this.iconPath = new vscode.ThemeIcon('output');
-        this.contextValue = 'outputItem';
+        this.contextValue = CONTEXT_VALUES.OUTPUT_ITEM;
         
         if (exitCode !== null && exitCode !== 0) {
             this.description = `Exit code: ${exitCode}`;
@@ -101,7 +114,7 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<CommandH
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
     
     private history: CommandHistoryItem[] = [];
-    private maxHistorySize: number = 100;
+    private maxHistorySize: number = MAX_HISTORY_SIZE;
     private storagePath: string;
     
     constructor(private context: vscode.ExtensionContext) {
@@ -110,7 +123,7 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<CommandH
         this.loadHistory();
         
         const config = vscode.workspace.getConfiguration('terminalHistory');
-        this.maxHistorySize = config.get('maxHistorySize', 100);
+        this.maxHistorySize = config.get('maxHistorySize', MAX_HISTORY_SIZE);
     }
     
     private ensureStorageDir() {

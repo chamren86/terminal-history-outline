@@ -3,10 +3,10 @@ import {
     detectSensitiveData, 
     redactSensitiveData, 
     isExcludedCommand,
-    SENSITIVE_PATTERNS,
     setSecurityConfig,
     shouldRedactOrBlock
 } from '../../security.js';
+import { SENSITIVE_PATTERNS } from '../../constants/sensitivePatterns.js';
 import { RedactionAction, RedactionLevel } from '../../enums/index.js';
 import { ISecurityConfig } from '../../interfaces/index.js';
 

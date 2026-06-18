@@ -5,7 +5,6 @@
 ### Step 1: Download the VSIX
 Download the latest `.vsix` file from:
 - [GitHub Releases](https://github.com/chamren86/terminal-history-outline/releases)
-- [Direct Download Link](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.1.vsix)
 
 ### Step 2: Install in VS Code
 

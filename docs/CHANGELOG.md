@@ -5,6 +5,37 @@ All notable changes to the "terminal-history-outline" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-06-18
+
+### Added
+- 📁 `src/constants/` - Centralized constants directory
+  - `sensitivePatterns.ts` - Predefined regex patterns for sensitive data detection
+  - `commandPatterns.ts` - Command cleaning and error detection patterns
+  - `vsCodeConstants.ts` - VS Code context values and API constants
+  - `displayConstants.ts` - UI strings, lengths, and formatting
+  - `regexPatterns.ts` - VS Code sequence patterns for cleaner.ts
+  - `configDefaults.ts` - Default configuration values
+- 📚 Comprehensive JSDoc documentation for all major classes and functions
+  - `extension.ts` - File-level and function-level documentation
+  - `security.ts` - Full documentation with examples
+  - `terminalHistoryProvider.ts` - Complete class and method documentation
+  - `privacyCommands.ts` - Dashboard command documentation
+
+### Changed
+- 🔄 Refactored `security.ts` to import patterns and defaults from constants
+- 🔄 Refactored `cleaner.ts` to use constants for regex patterns
+- 🔄 Refactored `extension.ts` to use constants for command cleaning and error detection
+- 🔄 Refactored `terminalHistoryProvider.ts` to use constants for display limits
+- 🔄 Refactored `privacyCommands.ts` to use constants for UI strings
+- 🔄 Better separation of data, constants, and logic
+- 🔄 Improved code organization and maintainability
+
+### Developer Experience
+- 📖 Clearer documentation for contributors
+- 🔧 Easier to maintain and extend
+- 🎯 Better separation of concerns
+- 🚀 Single source of truth for constants
+
 ## [0.4.2] - 2026-06-18
 
 ### Added

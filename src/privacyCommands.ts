@@ -1,8 +1,37 @@
+/**
+ * @file privacyCommands.ts
+ * @description Privacy dashboard commands for the Terminal History Outline extension.
+ * 
+ * This file handles:
+ * - Registering the privacy dashboard command
+ * - Creating and managing the privacy dashboard webview
+ * - Displaying security statistics and settings
+ * - Handling user actions from the dashboard (clear history, open settings)
+ * 
+ * @module privacyCommands
+ */
+
 import * as vscode from 'vscode';
 import { TerminalHistoryProvider } from './terminalHistoryProvider.js';
 import { getSecurityConfig } from './security.js';
 import { RedactionLevel } from './enums/index.js';
+import {
+    DASHBOARD_TITLE,
+    SECURITY_NOTICE
+} from './constants/index.js';
 
+/**
+ * Registers all privacy-related commands for the extension.
+ * 
+ * @param context - The VS Code extension context for registering subscriptions.
+ * @param historyProvider - The terminal history provider instance for accessing history data.
+ * @returns {void}
+ * 
+ * @description
+ * This function registers:
+ * - `terminalHistory.privacyDashboard` - Opens the privacy dashboard webview
+ * - `terminalHistory.clearSensitive` - Placeholder for clearing sensitive commands
+ */
 export function registerPrivacyCommands(
     context: vscode.ExtensionContext,
     historyProvider: TerminalHistoryProvider
@@ -13,7 +42,7 @@ export function registerPrivacyCommands(
         async () => {
             const panel = vscode.window.createWebviewPanel(
                 'terminalHistoryPrivacy',
-                'Terminal History - Privacy Dashboard',
+                DASHBOARD_TITLE,
                 vscode.ViewColumn.One,
                 { enableScripts: true }
             );
@@ -36,7 +65,7 @@ export function registerPrivacyCommands(
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Privacy Dashboard</title>
+                    <title>${DASHBOARD_TITLE}</title>
                     <style>
                         body { padding: 20px; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
                         .stats { display: flex; gap: 20px; margin-bottom: 30px; }
@@ -102,8 +131,7 @@ export function registerPrivacyCommands(
                     </div>
                     
                     <div class="warning">
-                        <p>⚠️ <strong>Security Notice:</strong> Commands are stored locally on your machine. 
-                        Sensitive data (passwords, API keys) may be stored unless redaction is enabled.</p>
+                        <p>${SECURITY_NOTICE}</p>
                     </div>
                     
                     <script>
@@ -132,7 +160,7 @@ export function registerPrivacyCommands(
         }
     );
     
-    // Clear sensitive commands
+    // Clear sensitive commands (placeholder for future implementation)
     const clearSensitiveCommand = vscode.commands.registerCommand(
         'terminalHistory.clearSensitive',
         async () => {

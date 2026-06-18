@@ -1,6 +1,6 @@
 /**
- * Represents the output display in the TreeView
- * Used when expanding a command item
+ * Represents the output display in the TreeView.
+ * Used when expanding a command item to show its output.
  */
 export interface IOutputTreeItem {
     /** Cleaned output text */

@@ -4,6 +4,23 @@
 ```markdown
 # Release Notes
 
+## v0.4.3 - Constants Extraction & Comprehensive Documentation (2026-06-18)
+
+### Added
+- 📁 New `src/constants/` directory with 6 organized constant files
+- 📚 Full JSDoc documentation for all classes and functions
+- 🔍 All magic numbers and strings replaced with named constants
+
+### Changed
+- 🔄 Refactored entire codebase to use centralized constants
+- 🔄 Better separation of data, constants, and logic
+- 🔄 Improved code organization and maintainability
+
+### Developer Experience
+- 📖 Clearer documentation for contributors
+- 🔧 Easier to maintain and extend
+- 🎯 Single source of truth for all constants
+
 ## v0.4.2 - Type Safety Refactor (2026-06-18)
 
 ### Added

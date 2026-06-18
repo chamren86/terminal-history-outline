@@ -1,3 +1,18 @@
+/**
+ * @file extension.ts
+ * @description Main entry point for the Terminal History Outline VS Code extension.
+ * 
+ * This file handles:
+ * - Extension activation and deactivation lifecycle management
+ * - Registration of VS Code commands (clear, rerun, copy output, privacy dashboard)
+ * - Terminal command capture using VS Code's Shell Integration API
+ * - Security checks for sensitive data in commands
+ * - Status bar integration showing command count
+ * - Privacy dashboard command registration
+ * 
+ * @module extension
+ */
+
 import * as vscode from 'vscode';
 import { TerminalHistoryProvider, CommandHistoryItem } from './terminalHistoryProvider.js';
 import { 
@@ -11,14 +26,35 @@ import {
 } from './security.js';
 import { registerPrivacyCommands } from './privacyCommands.js';
 import { RedactionAction } from './enums/index.js';
+import {
+    COMMAND_CLEAN_PATTERNS,
+    createErrorRegex,
+    CONTEXT_VALUES,
+    VIEW_IDS,
+    STATUS_BAR_ICON,
+    STATUS_BAR,
+    MAX_COMMAND_DISPLAY_LENGTH,
+    RERUN_TERMINAL_PREFIX
+} from './constants/index.js';
 
 let currentHistoryProvider: TerminalHistoryProvider | undefined;
 
+/**
+ * Called when the extension is activated by VS Code.
+ * 
+ * @param context - The VS Code extension context that provides lifecycle management.
+ * 
+ * @returns {void}
+ * 
+ * @description
+ * This function:
+ * 1. Loads security configuration from VS Code settings
+ * 2. Listens for configuration changes to reload security settings
+ * 3. Initializes the extension components
+ */
 export function activate(context: vscode.ExtensionContext) {
-    // Load security config from vscode settings
     loadConfigFromVSCode();
     
-    // Listen for config changes
     vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('terminalHistory.security')) {
             loadConfigFromVSCode();
@@ -28,6 +64,13 @@ export function activate(context: vscode.ExtensionContext) {
     initializeExtension(context);
 }
 
+/**
+ * Initializes the extension by setting up all components and subscriptions.
+ * 
+ * @param context - The VS Code extension context for registering subscriptions.
+ * 
+ * @returns {void}
+ */
 function initializeExtension(context: vscode.ExtensionContext) {
     if (currentHistoryProvider) {
         currentHistoryProvider.clearHistory();
@@ -35,7 +78,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
     
     currentHistoryProvider = new TerminalHistoryProvider(context);
     
-    const treeView = vscode.window.createTreeView('terminalHistoryOutline', {
+    const treeView = vscode.window.createTreeView(VIEW_IDS.TERMINAL_HISTORY, {
         treeDataProvider: currentHistoryProvider,
         showCollapseAll: true
     });
@@ -51,7 +94,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
     });
     
     const rerunCommand = vscode.commands.registerCommand('terminalHistory.rerun', (item: CommandHistoryItem) => {
-        const terminal = vscode.window.createTerminal(`History: ${item.commandText.substring(0, 30)}`);
+        const terminal = vscode.window.createTerminal(`${RERUN_TERMINAL_PREFIX}${item.commandText.substring(0, MAX_COMMAND_DISPLAY_LENGTH)}`);
         terminal.show();
         terminal.sendText(item.commandText);
     });
@@ -78,13 +121,14 @@ function initializeExtension(context: vscode.ExtensionContext) {
         const terminalName = event.terminal.name;
         const timestamp = new Date();
         
-        // Clean the command
-        commandLine = commandLine.replace(/ --color=auto/g, '');
-        commandLine = commandLine.replace(/ --color/g, '');
+        // Clean the command using constants
+        for (const pattern of COMMAND_CLEAN_PATTERNS) {
+            commandLine = commandLine.replace(pattern, '');
+        }
         
         // SECURITY: Check if command should be excluded
         if (isExcludedCommand(commandLine)) {
-            vscode.window.showInformationMessage(`🔒 Command excluded by security settings: ${commandLine.substring(0, 50)}...`);
+            vscode.window.showInformationMessage(`🔒 Command excluded by security settings: ${commandLine.substring(0, MAX_COMMAND_DISPLAY_LENGTH)}...`);
             return;
         }
         
@@ -96,9 +140,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
         let processedCommand = commandLine;
         let shouldSave = true;
         
-        // If there are sensitive patterns and detection is enabled
         if (sensitivePatterns.length > 0 && config.detectionEnabled) {
-            // First check if we should automatically handle it
             const autoResult = shouldRedactOrBlock(commandLine);
             
             if (autoResult.action === RedactionAction.BLOCK) {
@@ -108,7 +150,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
                 processedCommand = redactSensitiveData(commandLine);
                 vscode.window.showInformationMessage(`🔒 Sensitive data redacted from command`);
             } else {
-                // User interaction needed - show warning and handle asynchronously
                 handleSensitiveCommand(commandLine, sensitivePatterns).then((action) => {
                     if (action === RedactionAction.BLOCK) {
                         shouldSave = false;
@@ -117,7 +158,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
                     } else if (action === RedactionAction.REDACT) {
                         processedCommand = redactSensitiveData(commandLine);
                         vscode.window.showInformationMessage('🔒 Sensitive data redacted from command');
-                        // Update the command in history if it was already added
                         if (currentHistoryProvider) {
                             const history = currentHistoryProvider.getHistory();
                             const latestItem = history.find(item => 
@@ -125,7 +165,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
                                 item.exitCode === null
                             );
                             if (latestItem) {
-                                // We need to recreate the item with the redacted command
                                 const newItem = new CommandHistoryItem(
                                     processedCommand,
                                     latestItem.terminalName,
@@ -138,12 +177,10 @@ function initializeExtension(context: vscode.ExtensionContext) {
                             }
                         }
                     }
-                    // 'proceed' - save as-is
                 });
             }
         }
         
-        // Only proceed if not blocked
         if (!shouldSave) {
             return;
         }
@@ -182,7 +219,8 @@ function initializeExtension(context: vscode.ExtensionContext) {
         outputPromise.then((fullOutput) => {
             historyItem.output = fullOutput;
             
-            const hasError = /error|fail|exception|not found|permission denied|No such file|command not found|EACCES|ENOENT/i.test(fullOutput);
+            // Use the error detection regex from constants
+            const hasError = createErrorRegex().test(fullOutput);
             historyItem.exitCode = hasError ? 1 : 0;
             
             if (currentHistoryProvider) {
@@ -194,10 +232,13 @@ function initializeExtension(context: vscode.ExtensionContext) {
     context.subscriptions.push(startDisposable);
     
     // Status bar item
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    const statusBarItem = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment[STATUS_BAR.ALIGNMENT],
+        STATUS_BAR.PRIORITY
+    );
     const updateStatusBar = () => {
         if (currentHistoryProvider) {
-            statusBarItem.text = `$(history) ${currentHistoryProvider.getCommandCount()}`;
+            statusBarItem.text = `$(${STATUS_BAR_ICON}) ${currentHistoryProvider.getCommandCount()}`;
         }
     };
     statusBarItem.tooltip = 'Terminal History Outline';

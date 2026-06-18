@@ -1,6 +1,6 @@
 /**
- * Represents a single command in the history
- * Used by the TreeView and storage
+ * Represents a single command in the history.
+ * Used by the TreeView for display and by storage for persistence.
  */
 export interface ICommandHistoryItem {
     /** The command text as entered by the user */

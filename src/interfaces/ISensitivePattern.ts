@@ -1,5 +1,6 @@
 /**
- * Represents a pattern for detecting sensitive data in commands
+ * Represents a pattern for detecting sensitive data in commands.
+ * Used by the security module to identify passwords, API keys, tokens, etc.
  */
 export interface ISensitivePattern {
     /** The regular expression to match against */

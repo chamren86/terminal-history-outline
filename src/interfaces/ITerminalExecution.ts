@@ -1,6 +1,6 @@
 /**
- * Represents a terminal execution event
- * Used when capturing commands from VS Code
+ * Represents a terminal execution event.
+ * Used when capturing commands from VS Code's Shell Integration API.
  */
 export interface ITerminalExecution {
     /** The command line that was run */
