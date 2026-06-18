@@ -5,6 +5,29 @@ All notable changes to the "terminal-history-outline" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-06-18
+
+### Added
+- Enum directory for type-safe constants (`src/enums/`)
+  - `RedactionAction` - proceed, redact, block actions
+  - `RedactionLevel` - off, warn, redact, block levels
+- Interface directory for type definitions (`src/interfaces/`)
+  - `ISecurityConfig` - Security configuration interface
+  - `ISensitivePattern` - Sensitive pattern interface
+  - `ICommandHistoryItem` - Command history item interface
+  - `IOutputTreeItem` - Output tree item interface
+  - `ITerminalExecution` - Terminal execution interface
+  - `IPrivacyDashboardStats` - Privacy dashboard statistics interface
+
+### Changed
+- Refactored `security.ts` to use enum and interface imports
+- Improved type safety across the codebase
+- Separated interfaces from logic for better maintainability
+
+### Fixed
+- Type consistency in tests
+- Import paths for new enum and interface directories
+
 ## [0.4.1] - 2026-06-17
 
 ### Added

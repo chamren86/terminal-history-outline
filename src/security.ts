@@ -3,13 +3,10 @@
  * Handles sensitive data detection, redaction, and command exclusion
  */
 
-export interface SensitivePattern {
-    regex: RegExp;
-    name: string;
-    description: string;
-}
+import { RedactionAction, RedactionLevel } from './enums/index.js';
+import { ISensitivePattern, ISecurityConfig } from './interfaces/index.js';
 
-export const SENSITIVE_PATTERNS: SensitivePattern[] = [
+export const SENSITIVE_PATTERNS: ISensitivePattern[] = [
     {
         regex: /password[=:]\s*\S+/gi,
         name: 'password',
@@ -62,39 +59,31 @@ export const SENSITIVE_PATTERNS: SensitivePattern[] = [
     }
 ];
 
-export interface SecurityConfig {
-    detectionEnabled: boolean;
-    redactionLevel: 'off' | 'warn' | 'redact' | 'block';
-    customPatterns: string[];
-    excludedCommands: string[];
-    warnOnDetection: boolean;
-}
-
-const DEFAULT_CONFIG: SecurityConfig = {
+const DEFAULT_CONFIG: ISecurityConfig = {
     detectionEnabled: true,
-    redactionLevel: 'warn',
+    redactionLevel: RedactionLevel.WARN,
     customPatterns: [],
     excludedCommands: [],
     warnOnDetection: true
 };
 
-let currentConfig: SecurityConfig = { ...DEFAULT_CONFIG };
+let currentConfig: ISecurityConfig = { ...DEFAULT_CONFIG };
 
-export function setSecurityConfig(config: Partial<SecurityConfig>) {
+export function setSecurityConfig(config: Partial<ISecurityConfig>) {
     currentConfig = { ...currentConfig, ...config };
 }
 
-export function getSecurityConfig(): SecurityConfig {
+export function getSecurityConfig(): ISecurityConfig {
     return currentConfig;
 }
 
-export function detectSensitiveData(text: string, config?: SecurityConfig): SensitivePattern[] {
+export function detectSensitiveData(text: string, config?: ISecurityConfig): ISensitivePattern[] {
     const cfg = config || getSecurityConfig();
     if (!cfg.detectionEnabled) {
         return [];
     }
     
-    const found: SensitivePattern[] = [];
+    const found: ISensitivePattern[] = [];
     const allPatterns = [...SENSITIVE_PATTERNS];
     
     for (const patternStr of cfg.customPatterns) {
@@ -120,9 +109,9 @@ export function detectSensitiveData(text: string, config?: SecurityConfig): Sens
     return found;
 }
 
-export function redactSensitiveData(text: string, config?: SecurityConfig): string {
+export function redactSensitiveData(text: string, config?: ISecurityConfig): string {
     const cfg = config || getSecurityConfig();
-    if (cfg.redactionLevel !== 'redact') {
+    if (cfg.redactionLevel !== RedactionLevel.REDACT) {
         return text;
     }
     
@@ -175,7 +164,7 @@ export function redactSensitiveData(text: string, config?: SecurityConfig): stri
     return redacted;
 }
 
-export function isExcludedCommand(command: string, config?: SecurityConfig): boolean {
+export function isExcludedCommand(command: string, config?: ISecurityConfig): boolean {
     const cfg = config || getSecurityConfig();
     for (const pattern of cfg.excludedCommands) {
         try {
@@ -192,22 +181,22 @@ export function isExcludedCommand(command: string, config?: SecurityConfig): boo
 
 export async function handleSensitiveCommand(
     command: string, 
-    patterns: SensitivePattern[],
+    patterns: ISensitivePattern[],
     showWarning: boolean = true,
     showModal: boolean = false
-): Promise<'proceed' | 'redact' | 'block'> {
+): Promise<RedactionAction> {
     const config = getSecurityConfig();
     
     if (!config.warnOnDetection || !showWarning) {
-        return 'proceed';
+        return RedactionAction.PROCEED;
     }
     
-    if (config.redactionLevel === 'block') {
-        return 'block';
+    if (config.redactionLevel === RedactionLevel.BLOCK) {
+        return RedactionAction.BLOCK;
     }
     
-    if (config.redactionLevel === 'redact') {
-        return 'redact';
+    if (config.redactionLevel === RedactionLevel.REDACT) {
+        return RedactionAction.REDACT;
     }
     
     const patternNames = [...new Set(patterns.map(p => p.name))].join(', ');
@@ -227,52 +216,67 @@ export async function handleSensitiveCommand(
         
         switch (choice) {
             case 'Redact Sensitive Data':
-                return 'redact';
+                return RedactionAction.REDACT;
             case 'Block This Command':
-                return 'block';
+                return RedactionAction.BLOCK;
             default:
-                return 'proceed';
+                return RedactionAction.PROCEED;
         }
     } catch {
         // vscode not available (testing) - default to proceed
-        return 'proceed';
+        return RedactionAction.PROCEED;
     }
 }
 
-export function shouldRedactOrBlock(command: string, config?: SecurityConfig): { action: 'proceed' | 'redact' | 'block', reason: string } {
+export function shouldRedactOrBlock(
+    command: string, 
+    config?: ISecurityConfig
+): { action: RedactionAction; reason: string } {
     const cfg = config || getSecurityConfig();
     
     if (!cfg.detectionEnabled) {
-        return { action: 'proceed', reason: 'Detection disabled' };
+        return { action: RedactionAction.PROCEED, reason: 'Detection disabled' };
     }
     
     const patterns = detectSensitiveData(command, cfg);
     if (patterns.length === 0) {
-        return { action: 'proceed', reason: 'No sensitive data detected' };
+        return { action: RedactionAction.PROCEED, reason: 'No sensitive data detected' };
     }
     
     if (isExcludedCommand(command, cfg)) {
-        return { action: 'block', reason: 'Command excluded by user settings' };
+        return { action: RedactionAction.BLOCK, reason: 'Command excluded by user settings' };
     }
     
-    if (cfg.redactionLevel === 'block') {
-        return { action: 'block', reason: 'Redaction level set to block' };
+    if (cfg.redactionLevel === RedactionLevel.BLOCK) {
+        return { action: RedactionAction.BLOCK, reason: 'Redaction level set to block' };
     }
     
-    if (cfg.redactionLevel === 'redact') {
-        return { action: 'redact', reason: 'Redaction level set to redact' };
+    if (cfg.redactionLevel === RedactionLevel.REDACT) {
+        return { action: RedactionAction.REDACT, reason: 'Redaction level set to redact' };
     }
     
-    return { action: 'proceed', reason: 'User will be prompted' };
+    return { action: RedactionAction.PROCEED, reason: 'User will be prompted' };
 }
 
 export function loadConfigFromVSCode() {
     import('vscode')
         .then((vscode) => {
             const config = vscode.workspace.getConfiguration('terminalHistory');
+            const level = config.get<string>('security.redactionLevel', 'warn');
+            
+            // Map string to enum
+            let redactionLevel: RedactionLevel;
+            switch (level) {
+                case 'off': redactionLevel = RedactionLevel.OFF; break;
+                case 'warn': redactionLevel = RedactionLevel.WARN; break;
+                case 'redact': redactionLevel = RedactionLevel.REDACT; break;
+                case 'block': redactionLevel = RedactionLevel.BLOCK; break;
+                default: redactionLevel = RedactionLevel.WARN;
+            }
+            
             setSecurityConfig({
                 detectionEnabled: config.get('security.detectionEnabled', true),
-                redactionLevel: config.get('security.redactionLevel', 'warn'),
+                redactionLevel: redactionLevel,
                 customPatterns: config.get('security.customPatterns', []),
                 excludedCommands: config.get('security.excludedCommands', []),
                 warnOnDetection: config.get('security.warnOnDetection', true)

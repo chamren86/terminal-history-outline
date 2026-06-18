@@ -1,8 +1,7 @@
 import * as assert from 'assert';
 import { cleanTerminalOutput } from '../../cleaner.js';
-import { describe, it } from 'vitest';
 
-
+// Sample outputs for testing
 const SAMPLE_OUTPUTS = {
     greenText: '\u001b[32mgreen text\u001b[0m',
     redText: '\u001b[31mred text\u001b[0m',
@@ -79,6 +78,7 @@ describe('ANSI Cleaner Tests', () => {
         const start = Date.now();
         const result = cleanTerminalOutput(longInput);
         const end = Date.now();
+        // Should complete in under 100ms
         assert.ok(end - start < 100, `Took ${end - start}ms`);
         assert.ok(result.includes('b'));
     });

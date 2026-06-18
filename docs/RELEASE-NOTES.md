@@ -4,6 +4,22 @@
 ```markdown
 # Release Notes
 
+## v0.4.2 - Type Safety Refactor (2026-06-18)
+
+### Added
+- 📁 `src/enums/` - Type-safe constants for actions and levels
+- 📁 `src/interfaces/` - Centralized type definitions
+- 🛡️ Improved TypeScript type safety throughout the codebase
+
+### Changed
+- 🔄 Refactored `security.ts` to use imported enums and interfaces
+- 🔄 Better separation of concerns (types vs logic)
+
+### Developer Experience
+- 📚 Clearer code structure for contributors
+- ✅ Better IDE autocomplete and type checking
+- 🔧 Easier to maintain and extend
+
 ## v0.4.1 - Testing Infrastructure & Pre-commit (2026-06-17)
 
 ### Added

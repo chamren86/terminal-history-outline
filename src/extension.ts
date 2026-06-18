@@ -7,10 +7,10 @@ import {
     handleSensitiveCommand,
     shouldRedactOrBlock,
     loadConfigFromVSCode,
-    getSecurityConfig,
-    setSecurityConfig
+    getSecurityConfig
 } from './security.js';
 import { registerPrivacyCommands } from './privacyCommands.js';
+import { RedactionAction } from './enums/index.js';
 
 let currentHistoryProvider: TerminalHistoryProvider | undefined;
 
@@ -101,20 +101,20 @@ function initializeExtension(context: vscode.ExtensionContext) {
             // First check if we should automatically handle it
             const autoResult = shouldRedactOrBlock(commandLine);
             
-            if (autoResult.action === 'block') {
+            if (autoResult.action === RedactionAction.BLOCK) {
                 vscode.window.showWarningMessage(`🔒 Command blocked: ${autoResult.reason}`);
                 return;
-            } else if (autoResult.action === 'redact') {
+            } else if (autoResult.action === RedactionAction.REDACT) {
                 processedCommand = redactSensitiveData(commandLine);
                 vscode.window.showInformationMessage(`🔒 Sensitive data redacted from command`);
             } else {
                 // User interaction needed - show warning and handle asynchronously
                 handleSensitiveCommand(commandLine, sensitivePatterns).then((action) => {
-                    if (action === 'block') {
+                    if (action === RedactionAction.BLOCK) {
                         shouldSave = false;
                         vscode.window.showWarningMessage('🔒 Command blocked by user');
                         return;
-                    } else if (action === 'redact') {
+                    } else if (action === RedactionAction.REDACT) {
                         processedCommand = redactSensitiveData(commandLine);
                         vscode.window.showInformationMessage('🔒 Sensitive data redacted from command');
                         // Update the command in history if it was already added

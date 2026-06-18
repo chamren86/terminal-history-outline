@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TerminalHistoryProvider } from './terminalHistoryProvider.js';
 import { getSecurityConfig } from './security.js';
+import { RedactionLevel } from './enums/index.js';
 
 export function registerPrivacyCommands(
     context: vscode.ExtensionContext,
@@ -20,6 +21,14 @@ export function registerPrivacyCommands(
             const history = historyProvider.getHistory();
             const totalCommands = history.length;
             const config = getSecurityConfig();
+            
+            // Map enum to display string
+            const redactionLevelDisplay = {
+                [RedactionLevel.OFF]: 'Off',
+                [RedactionLevel.WARN]: 'Warn',
+                [RedactionLevel.REDACT]: 'Redact',
+                [RedactionLevel.BLOCK]: 'Block'
+            }[config.redactionLevel] || 'Unknown';
             
             panel.webview.html = `
                 <!DOCTYPE html>
@@ -59,7 +68,7 @@ export function registerPrivacyCommands(
                             <div class="stat-label">Security Detection</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number">${config.redactionLevel}</div>
+                            <div class="stat-number">${redactionLevelDisplay}</div>
                             <div class="stat-label">Redaction Level</div>
                         </div>
                     </div>
@@ -72,7 +81,7 @@ export function registerPrivacyCommands(
                         </div>
                         <div class="setting">
                             <span>Redaction Level</span>
-                            <span class="setting-value">${config.redactionLevel}</span>
+                            <span class="setting-value">${redactionLevelDisplay}</span>
                         </div>
                         <div class="setting">
                             <span>Excluded Commands</span>

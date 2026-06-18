@@ -5,9 +5,10 @@ import {
     isExcludedCommand,
     SENSITIVE_PATTERNS,
     setSecurityConfig,
-    SecurityConfig,
     shouldRedactOrBlock
 } from '../../security.js';
+import { RedactionAction, RedactionLevel } from '../../enums/index.js';
+import { ISecurityConfig } from '../../interfaces/index.js';
 
 // Use real-looking test data that matches the regex patterns
 const SENSITIVE_SAMPLES = {
@@ -15,22 +16,18 @@ const SENSITIVE_SAMPLES = {
     passwordColon: 'mysql -u root -p:MySecretPassword123',
     passwordEquals: 'mysql -u root --password=MySecretPassword123',
     apiKey: 'curl -H "Authorization: Bearer sk-abc123xyz789def456" https://api.example.com',
-    // AWS key must match pattern: (?:AKIA|ASIA)[0-9A-Z]{16}
     awsKey: 'AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE',
-    // JWT token must match the Bearer pattern
     jwt: 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-    // GitHub token must match: gh[ps]_[A-Za-z0-9]{36,}
     githubToken: 'ghp_abcdefghijklmnopqrstuvwxyz1234567890',
-    // Slack token must match: xox[baprs]-[0-9A-Za-z\-]+
     slackToken: 'xoxb-1234567890-abcdefghijklmnopqrstuvwx',
     sshKey: `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----`,
 };
 
-const testConfig: SecurityConfig = {
+const testConfig: ISecurityConfig = {
     detectionEnabled: true,
-    redactionLevel: 'redact',
+    redactionLevel: RedactionLevel.REDACT,
     customPatterns: [],
     excludedCommands: ['mysql.*', '.*secret.*'],
     warnOnDetection: true
@@ -120,7 +117,7 @@ describe('Security Tests', () => {
         });
 
         it('Should respect detection disabled setting', () => {
-            const disabledConfig: SecurityConfig = {
+            const disabledConfig: ISecurityConfig = {
                 ...testConfig,
                 detectionEnabled: false
             };
@@ -130,7 +127,7 @@ describe('Security Tests', () => {
         });
 
         it('Should handle custom patterns', () => {
-            const customConfig: SecurityConfig = {
+            const customConfig: ISecurityConfig = {
                 ...testConfig,
                 customPatterns: ['CUSTOM_TOKEN=[A-Za-z0-9]+']
             };
@@ -172,7 +169,7 @@ describe('Security Tests', () => {
 
         it('Should redact AWS keys', () => {
             const result = redactSensitiveData(SENSITIVE_SAMPLES.awsKey);
-            assert.strictEqual(result.includes('AKIATESTKEYEXAMPLE'), false);
+            assert.strictEqual(result.includes('AKIAIOSFODNN7EXAMPLE'), false);
             assert.strictEqual(result.includes('[REDACTED]'), true);
             assert.strictEqual(result.includes('AWS_ACCESS_KEY_ID='), true);
         });
@@ -186,13 +183,13 @@ describe('Security Tests', () => {
 
         it('Should redact GitHub tokens', () => {
             const result = redactSensitiveData(SENSITIVE_SAMPLES.githubToken);
-            assert.strictEqual(result.includes('FAKETOKEN'), false);
+            assert.strictEqual(result.includes('ghp_abcdefghijklmnopqrstuvwxyz1234567890'), false);
             assert.strictEqual(result.includes('[REDACTED]'), true);
         });
 
         it('Should redact Slack tokens', () => {
             const result = redactSensitiveData(SENSITIVE_SAMPLES.slackToken);
-            assert.strictEqual(result.includes('FAKE'), false);
+            assert.strictEqual(result.includes('xoxb-1234567890-abcdefghijklmnopqrstuvwx'), false);
             assert.strictEqual(result.includes('[REDACTED]'), true);
         });
 
@@ -210,9 +207,9 @@ describe('Security Tests', () => {
         });
 
         it('Should respect redaction level setting', () => {
-            const warnConfig: SecurityConfig = {
+            const warnConfig: ISecurityConfig = {
                 ...testConfig,
-                redactionLevel: 'warn'
+                redactionLevel: RedactionLevel.WARN
             };
             
             const result = redactSensitiveData(SENSITIVE_SAMPLES.password, warnConfig);
@@ -238,7 +235,7 @@ describe('Security Tests', () => {
         });
 
         it('Should handle invalid regex patterns gracefully', () => {
-            const invalidConfig: SecurityConfig = {
+            const invalidConfig: ISecurityConfig = {
                 ...testConfig,
                 excludedCommands: ['[invalid']
             };
@@ -280,47 +277,47 @@ describe('Security Tests', () => {
 
     describe('Sensitive Data Handling', () => {
         it('should auto-redact when redaction level is set to redact', () => {
-            const redactConfig: SecurityConfig = {
+            const redactConfig: ISecurityConfig = {
                 ...testConfig,
-                redactionLevel: 'redact',
+                redactionLevel: RedactionLevel.REDACT,
                 excludedCommands: []
             };
             setSecurityConfig(redactConfig);
             
             const result = shouldRedactOrBlock(SENSITIVE_SAMPLES.password);
-            assert.strictEqual(result.action, 'redact');
+            assert.strictEqual(result.action, RedactionAction.REDACT);
             assert.strictEqual(result.reason, 'Redaction level set to redact');
         });
 
         it('should auto-block when redaction level is set to block', () => {
-            const blockConfig: SecurityConfig = {
+            const blockConfig: ISecurityConfig = {
                 ...testConfig,
-                redactionLevel: 'block',
+                redactionLevel: RedactionLevel.BLOCK,
                 excludedCommands: []
             };
             setSecurityConfig(blockConfig);
             
             const result = shouldRedactOrBlock(SENSITIVE_SAMPLES.password);
-            assert.strictEqual(result.action, 'block');
+            assert.strictEqual(result.action, RedactionAction.BLOCK);
             assert.strictEqual(result.reason, 'Redaction level set to block');
         });
 
         it('should proceed when detection is disabled', () => {
-            const disabledConfig: SecurityConfig = {
+            const disabledConfig: ISecurityConfig = {
                 ...testConfig,
                 detectionEnabled: false
             };
             setSecurityConfig(disabledConfig);
             
             const result = shouldRedactOrBlock(SENSITIVE_SAMPLES.password);
-            assert.strictEqual(result.action, 'proceed');
+            assert.strictEqual(result.action, RedactionAction.PROCEED);
             assert.strictEqual(result.reason, 'Detection disabled');
         });
 
         it('should proceed when no sensitive data is detected', () => {
-            const defaultConfig: SecurityConfig = {
+            const defaultConfig: ISecurityConfig = {
                 detectionEnabled: true,
-                redactionLevel: 'redact',
+                redactionLevel: RedactionLevel.REDACT,
                 customPatterns: [],
                 excludedCommands: [],
                 warnOnDetection: true
@@ -328,29 +325,29 @@ describe('Security Tests', () => {
             setSecurityConfig(defaultConfig);
             
             const result = shouldRedactOrBlock('ls -la');
-            assert.strictEqual(result.action, 'proceed');
+            assert.strictEqual(result.action, RedactionAction.PROCEED);
             assert.strictEqual(result.reason, 'No sensitive data detected');
         });
 
         it('should prompt user when redaction level is set to warn', () => {
-            const warnConfig: SecurityConfig = {
+            const warnConfig: ISecurityConfig = {
                 ...testConfig,
-                redactionLevel: 'warn',
+                redactionLevel: RedactionLevel.WARN,
                 excludedCommands: []
             };
             setSecurityConfig(warnConfig);
             
             const result = shouldRedactOrBlock(SENSITIVE_SAMPLES.password);
-            assert.strictEqual(result.action, 'proceed');
+            assert.strictEqual(result.action, RedactionAction.PROCEED);
             assert.strictEqual(result.reason, 'User will be prompted');
         });
     });
 });
 
 afterAll(() => {
-    const defaultConfig: SecurityConfig = {
+    const defaultConfig: ISecurityConfig = {
         detectionEnabled: true,
-        redactionLevel: 'redact',
+        redactionLevel: RedactionLevel.REDACT,
         customPatterns: [],
         excludedCommands: ['mysql.*', '.*secret.*'],
         warnOnDetection: true
