@@ -34,23 +34,16 @@ export const SAMPLE_OUTPUTS = {
     
     // Complex with brackets (should not strip legitimate brackets)
     bracketContent: '[WARNING] This has brackets [that should] remain',
-};
 
-// Sensitive data samples - using real-looking test data that matches regex patterns
-export const SENSITIVE_SAMPLES = {
-    password: 'mysql -u root -pMySecretPassword123',
-    passwordColon: 'mysql -u root -p:MySecretPassword123',
-    passwordEquals: 'mysql -u root --password=MySecretPassword123',
-    apiKey: 'curl -H "Authorization: Bearer sk-abc123xyz789def456" https://api.example.com',
-    // AWS key must match pattern: (?:AKIA|ASIA)[0-9A-Z]{16}
-    awsKey: 'AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE',
-    // JWT token must match the Bearer pattern
-    jwt: 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-    // GitHub token must match: gh[ps]_[A-Za-z0-9]{36,}
-    githubToken: 'ghp_abcdefghijklmnopqrstuvwxyz1234567890',
-    // Slack token must match: xox[baprs]-[0-9A-Za-z\-]+
-    slackToken: 'xoxb-1234567890-abcdefghijklmnopqrstuvwx',
-    sshKey: `-----BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEA...
------END RSA PRIVATE KEY-----`,
+    // New: Warning outputs
+    deprecationWarning: 'DeprecationWarning: The `url.parse()` behavior is not standardized',
+    npmWarning: 'npm warn deprecated inflight@1.0.6: This module is not supported',
+    securityWarning: 'Potential security issue detected: Your extension package contains sensitive information',
+    gitWarning: 'warning: The git repository has too many loose objects',
+    
+    // New: Error outputs
+    gitError: "git: 'confit' is not a git command. See 'git --help'.",
+    fatalError: 'fatal: not a git repository',
+    commandNotFound: 'bash: ls: command not found',
+    permissionDenied: 'permission denied: /root/file.txt'
 };

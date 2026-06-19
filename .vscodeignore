@@ -31,6 +31,8 @@ out/**
 !out/privacyCommands.js.map
 !out/terminalHistoryProvider.js
 !out/terminalHistoryProvider.js.map
+!out/commandHistoryItem.js
+!out/commandHistoryItem.js.map
 !out/constants/**/*.js
 !out/constants/**/*.js.map
 !out/enums/**/*.js

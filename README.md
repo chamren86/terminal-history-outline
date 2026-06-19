@@ -1,9 +1,9 @@
 # Terminal History Outline
 
-[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](https://github.com/chamren86/terminal-history-outline)
+[![Version](https://img.shields.io/badge/version-0.4.4-blue.svg)](https://github.com/chamren86/terminal-history-outline)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.93%2B-blue.svg)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Download VSIX](https://img.shields.io/badge/download-.vsix-blue.svg)](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.2.vsix)
+[![Download VSIX](https://img.shields.io/badge/download-.vsix-blue.svg)](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.4.vsix)
 
 View and manage your terminal command history directly in the VS Code Explorer outline view.
 
@@ -24,17 +24,15 @@ View and manage your terminal command history directly in the VS Code Explorer o
   <p><em>Terminal History Outline in action</em></p>
 </div>
 
-## Installation
-
 ### From VSIX (Manual Download)
 
 1. Download the latest `.vsix` file:
    - From [GitHub Releases](https://github.com/chamren86/terminal-history-outline/releases)
-   - Or via direct link: [Download Latest VSIX](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.1.vsix)
+   - Or via direct link: [Download Latest VSIX](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.4.vsix)
 
 2. Install the extension:
    - **VS Code UI**: Extensions → `...` → Install from VSIX → Select the file
-   - **Command Line**: `code --install-extension terminal-history-outline-0.4.1.vsix`
+   - **Command Line**: `code --install-extension terminal-history-outline-0.4.4.vsix`
 
 ### From VS Code Marketplace (Coming Soon)
 The extension will be available on the Marketplace after beta testing.

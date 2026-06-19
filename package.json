@@ -3,7 +3,7 @@
   "type": "module",
   "displayName": "Terminal History Outline",
   "description": "View and manage terminal command history in the Explorer outline view",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -129,9 +129,9 @@
     "vscode:prepublish": "npm run compile",
     "compile": "./scripts/build.sh",
     "watch": "tsc -watch -p ./",
-    "test": "vitest run",
+    "test": "npm run compile && node test/run-tests.js",
+    "test:vitest": "vitest run",
     "test:watch": "vitest",
-    "test:unit": "./scripts/unit-test.sh",
     "test:full": "./scripts/test.sh",
     "test:act": "act -j test --pull=false",
     "precommit": "./scripts/precommit.sh",

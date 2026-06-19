@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { CommandHistoryItem } from './commandHistoryItem.js';
 import { cleanTerminalOutput } from './cleaner.js';
 import {
     CONTEXT_VALUES,
@@ -9,81 +10,7 @@ import {
     MAX_HISTORY_SIZE
 } from './constants/index.js';
 
-export class CommandHistoryItem extends vscode.TreeItem {
-    private rawOutput: string = '';
-    private cleanOutput: string = '';
-    
-    constructor(
-        public readonly commandText: string,
-        public readonly terminalName: string,
-        public readonly timestamp: Date,
-        public readonly cwd: string = '',
-        output: string = '',
-        public exitCode: number | null = null
-    ) {
-        super('', vscode.TreeItemCollapsibleState.Collapsed);
-        
-        this.rawOutput = output;
-        this.cleanOutput = cleanTerminalOutput(output);
-        
-        const outputPreview = this.cleanOutput.substring(0, MAX_OUTPUT_PREVIEW_LENGTH);
-        const isTruncated = this.cleanOutput.length > MAX_OUTPUT_PREVIEW_LENGTH;
-        
-        this.tooltip = `${commandText}\nTerminal: ${terminalName}\nTime: ${timestamp.toLocaleString()}\nCWD: ${cwd || 'unknown'}\nExit Code: ${exitCode === null ? 'running' : exitCode}\n\nOutput:\n${outputPreview}${isTruncated ? '...' : ''}`;
-        
-        this.applyStatusStyling();
-        this.contextValue = CONTEXT_VALUES.COMMAND_ITEM;
-    }
-    
-    private applyStatusStyling() {
-        this.iconPath = undefined;
-        
-        if (this.exitCode === null) {
-            this.label = `🟡 ${this.commandText}`;
-            this.description = this.getTimeAgo();
-        } else if (this.exitCode === 0) {
-            this.label = `🟢 ${this.commandText}`;
-            this.description = this.getTimeAgo();
-        } else {
-            this.label = `🔴 ${this.commandText}`;
-            this.description = this.getTimeAgo();
-        }
-    }
-    
-    public get output(): string {
-        return this.cleanOutput;
-    }
-    
-    public set output(value: string) {
-        this.rawOutput = value;
-        this.cleanOutput = cleanTerminalOutput(value);
-        
-        const outputPreview = this.cleanOutput.substring(0, MAX_OUTPUT_PREVIEW_LENGTH);
-        const isTruncated = this.cleanOutput.length > MAX_OUTPUT_PREVIEW_LENGTH;
-        
-        this.tooltip = `${this.commandText}\nTerminal: ${this.terminalName}\nTime: ${this.timestamp.toLocaleString()}\nCWD: ${this.cwd || 'unknown'}\nExit Code: ${this.exitCode === null ? 'running' : this.exitCode}\n\nOutput:\n${outputPreview}${isTruncated ? '...' : ''}`;
-        this.applyStatusStyling();
-    }
-    
-    private getTimeAgo(): string {
-        const seconds = Math.floor((new Date().getTime() - this.timestamp.getTime()) / 1000);
-        if (seconds < 60) return `${seconds}s`;
-        const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) return `${minutes}m`;
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours}h`;
-        return `${Math.floor(hours / 24)}d`;
-    }
-    
-    public getOutputItem(): OutputTreeItem {
-        return new OutputTreeItem(this.output, this.exitCode, this.commandText);
-    }
-    
-    public getRawOutput(): string {
-        return this.rawOutput;
-    }
-}
-
+// OutputTreeItem remains here since it only uses vscode
 class OutputTreeItem extends vscode.TreeItem {
     constructor(output: string, exitCode: number | null, commandText: string) {
         const cleanOutput = cleanTerminalOutput(output);
@@ -109,8 +36,38 @@ class OutputTreeItem extends vscode.TreeItem {
     }
 }
 
-export class TerminalHistoryProvider implements vscode.TreeDataProvider<CommandHistoryItem | OutputTreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<CommandHistoryItem | OutputTreeItem | undefined | null | void> = new vscode.EventEmitter<CommandHistoryItem | OutputTreeItem | undefined | null | void>();
+// Extend CommandHistoryItem to work with vscode.TreeItem
+export class VSCodeCommandHistoryItem extends vscode.TreeItem {
+    private _item: CommandHistoryItem;
+    
+    constructor(item: CommandHistoryItem) {
+        super(item.label, vscode.TreeItemCollapsibleState.Collapsed);
+        this._item = item;
+        this.tooltip = item.tooltip;
+        this.iconPath = item.iconPath;
+        this.contextValue = item.contextValue;
+        this.description = item.description;
+        this.label = item.label;
+    }
+    
+    get commandText(): string { return this._item.commandText; }
+    get terminalName(): string { return this._item.terminalName; }
+    get timestamp(): Date { return this._item.timestamp; }
+    get cwd(): string { return this._item.cwd; }
+    get output(): string { return this._item.output; }
+    set output(value: string) { this._item.output = value; }
+    get exitCode(): number | null { return this._item.exitCode; }
+    set exitCode(value: number | null) { this._item.exitCode = value; }
+    getRawOutput(): string { return this._item.getRawOutput(); }
+    getOutputItem(): OutputTreeItem {
+        return new OutputTreeItem(this.output, this.exitCode, this.commandText);
+    }
+}
+
+export { CommandHistoryItem };
+
+export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCommandHistoryItem | OutputTreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<VSCodeCommandHistoryItem | OutputTreeItem | undefined | null | void> = new vscode.EventEmitter<VSCodeCommandHistoryItem | OutputTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
     
     private history: CommandHistoryItem[] = [];
@@ -221,16 +178,20 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<CommandH
         return this.history;
     }
     
-    getTreeItem(element: CommandHistoryItem | OutputTreeItem): vscode.TreeItem {
+    getTreeItem(element: VSCodeCommandHistoryItem | OutputTreeItem): vscode.TreeItem {
+        if (element instanceof VSCodeCommandHistoryItem) {
+            return element;
+        }
         return element;
     }
     
-    async getChildren(element?: CommandHistoryItem | OutputTreeItem): Promise<(CommandHistoryItem | OutputTreeItem)[]> {
+    async getChildren(element?: VSCodeCommandHistoryItem | OutputTreeItem): Promise<(VSCodeCommandHistoryItem | OutputTreeItem)[]> {
         if (!element) {
-            return this.history;
+            // Return all commands as VSCodeCommandHistoryItem
+            return this.history.map(item => new VSCodeCommandHistoryItem(item));
         }
         
-        if (element instanceof CommandHistoryItem) {
+        if (element instanceof VSCodeCommandHistoryItem) {
             return [element.getOutputItem()];
         }
         

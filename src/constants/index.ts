@@ -7,7 +7,11 @@ export { SENSITIVE_PATTERNS } from './sensitivePatterns.js';
 export {
     COMMAND_CLEAN_PATTERNS,
     ERROR_DETECTION_PATTERNS,
-    createErrorRegex
+    WARNING_DETECTION_PATTERNS,
+    createErrorRegex,
+    createWarningRegex,
+    hasErrorOutput,
+    hasWarningOutput
 } from './commandPatterns.js';
 export {
     VSCODE_SEQUENCES,
