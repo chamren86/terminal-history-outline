@@ -1,3 +1,18 @@
+/**
+ * @file extension.ts
+ * @description Main entry point for the Terminal History Outline VS Code extension.
+ * 
+ * This file handles:
+ * - Extension activation and lifecycle management
+ * - Registration of VS Code commands (clear, rerun, copy output, privacy dashboard)
+ * - Terminal command capture using VS Code's Shell Integration API
+ * - Multi-layer exit code detection for accurate status indicators
+ * - Security checks for sensitive data in commands
+ * - Status bar integration showing command count
+ * 
+ * @module extension
+ */
+
 import * as vscode from 'vscode';
 import { TerminalHistoryProvider, CommandHistoryItem } from './terminalHistoryProvider.js';
 import { 
@@ -21,8 +36,24 @@ import {
     RERUN_TERMINAL_PREFIX
 } from './constants/index.js';
 
+/**
+ * Singleton reference to the current TerminalHistoryProvider instance.
+ * Used to maintain state across function calls within the extension.
+ */
 let currentHistoryProvider: TerminalHistoryProvider | undefined;
 
+/**
+ * Called when the extension is activated by VS Code.
+ * 
+ * @param context - The VS Code extension context that provides lifecycle management.
+ *                  Used to register subscriptions that are cleaned up on deactivation.
+ * 
+ * @description
+ * This function:
+ * 1. Loads security configuration from VS Code settings
+ * 2. Listens for configuration changes to reload security settings
+ * 3. Initializes the extension components
+ */
 export function activate(context: vscode.ExtensionContext) {
     loadConfigFromVSCode();
     
@@ -35,6 +66,21 @@ export function activate(context: vscode.ExtensionContext) {
     initializeExtension(context);
 }
 
+/**
+ * Initializes the extension by setting up all components and subscriptions.
+ * 
+ * @param context - The VS Code extension context for registering subscriptions.
+ * 
+ * @description
+ * This function:
+ * 1. Creates the TerminalHistoryProvider and registers the TreeView
+ * 2. Registers all VS Code commands
+ * 3. Sets up terminal command capture with security checks
+ * 4. Manages the status bar item
+ * 
+ * @see TerminalHistoryProvider
+ * @see registerPrivacyCommands
+ */
 function initializeExtension(context: vscode.ExtensionContext) {
     if (currentHistoryProvider) {
         currentHistoryProvider.clearHistory();
@@ -79,31 +125,28 @@ function initializeExtension(context: vscode.ExtensionContext) {
         registerPrivacyCommands(context, currentHistoryProvider);
     }
     
-    // Store running commands to match with exit codes
-    const runningCommands = new Map<string, CommandHistoryItem>();
-    
-    // Listen for command start to capture output
+    // Listen for terminal commands and capture output
     const startDisposable = vscode.window.onDidStartTerminalShellExecution((event) => {
         let commandLine = event.execution.commandLine.value;
         const terminalName = event.terminal.name;
         const timestamp = new Date();
         
-        // Clean the command
+        // Clean the command by removing common shell flags
         for (const pattern of COMMAND_CLEAN_PATTERNS) {
             commandLine = commandLine.replace(pattern, '');
         }
         
-        // SECURITY: Check if command should be excluded
+        // SECURITY: Check if command should be excluded by user settings
         if (isExcludedCommand(commandLine)) {
             vscode.window.showInformationMessage(`🔒 Command excluded by security settings: ${commandLine.substring(0, MAX_COMMAND_DISPLAY_LENGTH)}...`);
             return;
         }
         
-        // SECURITY: Check for sensitive data
+        // SECURITY: Check for sensitive data (passwords, API keys, etc.)
         const sensitivePatterns = detectSensitiveData(commandLine);
         const config = getSecurityConfig();
         
-        // Handle sensitive data based on configuration
+        // Handle sensitive data based on user configuration
         let processedCommand = commandLine;
         let shouldSave = true;
         
@@ -152,7 +195,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
             return;
         }
         
-        // Get working directory
+        // Get working directory from shell integration
         let cwd = '';
         try {
             const shellIntegration = event.terminal as any;
@@ -160,15 +203,11 @@ function initializeExtension(context: vscode.ExtensionContext) {
                 cwd = shellIntegration.shellIntegration.cwd.fsPath;
             }
         } catch (error) {
-            // CWD not available
+            // CWD not available - use empty string
         }
         
         // Create history item with processed command
         const historyItem = new CommandHistoryItem(processedCommand, terminalName, timestamp, cwd);
-        
-        // Store in running commands map
-        const commandId = `${terminalName}-${timestamp.getTime()}`;
-        runningCommands.set(commandId, historyItem);
         
         if (currentHistoryProvider) {
             currentHistoryProvider.addCommand(historyItem);
@@ -189,6 +228,46 @@ function initializeExtension(context: vscode.ExtensionContext) {
         
         outputPromise.then((fullOutput) => {
             historyItem.output = fullOutput;
+            
+            // Multi-layer exit code detection
+            let exitCode = null;
+            
+            // Layer 1: Try to get exit code from the event
+            try {
+                const exec = event.execution as any;
+                if (exec.exitCode !== undefined && exec.exitCode !== null) {
+                    exitCode = exec.exitCode;
+                }
+            } catch (e) {
+                // Ignore - continue to next layer
+            }
+            
+            // Layer 2: Try to get exit code from the terminal
+            if (exitCode === null) {
+                try {
+                    const terminal = event.terminal as any;
+                    if (terminal.exitStatus !== undefined && terminal.exitStatus !== null) {
+                        exitCode = terminal.exitStatus;
+                    }
+                } catch (e) {
+                    // Ignore - continue to next layer
+                }
+            }
+            
+            // Layer 3: Fall back to output analysis
+            if (exitCode === null) {
+                const hasNpmError = /npm ERR/i.test(fullOutput);
+                const hasError = /error|fail|exception|not found|permission denied|No such file|command not found|EACCES|ENOENT|npm error|version not changed|Version not changed/i.test(fullOutput);
+                
+                if (hasNpmError || hasError) {
+                    exitCode = 1;
+                } else {
+                    exitCode = 0;
+                }
+            }
+            
+            historyItem.exitCode = exitCode;
+            
             if (currentHistoryProvider) {
                 currentHistoryProvider.updateCommand(historyItem);
             }
@@ -197,53 +276,7 @@ function initializeExtension(context: vscode.ExtensionContext) {
     
     context.subscriptions.push(startDisposable);
     
-    // Listen for command end to capture exit codes
-    const endDisposable = vscode.window.onDidEndTerminalShellExecution((event) => {
-        const commandLine = event.execution.commandLine.value;
-        const exitCode = (event.execution as any).exitCode;
-        
-        console.log(`🏁 Command ended: ${commandLine} with exit code: ${exitCode}`);
-        
-        if (currentHistoryProvider) {
-            const history = currentHistoryProvider.getHistory();
-            
-            // Find the most recent command with the same name that has null exit code
-            const matchingItem = history.find(item => 
-                item.commandText === commandLine && 
-                item.exitCode === null
-            );
-            
-            if (matchingItem) {
-                // If exitCode is undefined, try to infer from output
-                if (exitCode === undefined) {
-                    // Check if the output contains error indicators
-                    const hasError = /error|fail|exception|not found|permission denied|No such file|command not found|EACCES|ENOENT/i.test(matchingItem.output);
-                    // Check for success indicators in test output
-                    const hasTestSuccess = /passing|✓|ok/.test(matchingItem.output);
-                    const hasTestFailure = /failing|✖|not ok/.test(matchingItem.output);
-                    
-                    if (hasTestSuccess && !hasTestFailure) {
-                        // This looks like a test run that passed
-                        matchingItem.exitCode = 0;
-                    } else if (hasError) {
-                        matchingItem.exitCode = 1;
-                    } else {
-                        // Default to success for commands without errors
-                        matchingItem.exitCode = 0;
-                    }
-                } else {
-                    matchingItem.exitCode = exitCode;
-                }
-                
-                currentHistoryProvider.updateCommand(matchingItem);
-                console.log(`✅ Updated exit code for ${commandLine} to ${matchingItem.exitCode}`);
-            }
-        }
-    });
-    
-    context.subscriptions.push(endDisposable);
-    
-    // Status bar item
+    // Status bar item showing command count
     const statusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment[STATUS_BAR.ALIGNMENT],
         STATUS_BAR.PRIORITY
@@ -263,4 +296,14 @@ function initializeExtension(context: vscode.ExtensionContext) {
     }
 }
 
+/**
+ * Called when the extension is deactivated by VS Code.
+ * 
+ * @returns {void}
+ * 
+ * @description
+ * This function is called when VS Code is shutting down or the extension is being disabled.
+ * Cleanup of resources is handled automatically through VS Code's subscription system,
+ * so no explicit cleanup is required in this function.
+ */
 export function deactivate() {}
