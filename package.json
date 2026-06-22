@@ -2,7 +2,7 @@
   "name": "terminal-history-outline",
   "displayName": "Terminal History Outline",
   "description": "View and manage your terminal command history directly in the VS Code Explorer outline view.",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/chamren86/terminal-history-outline.git"

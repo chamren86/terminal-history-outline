@@ -4,6 +4,51 @@
 ```markdown
 # Release Notes
 
+## v1.0.0 - Production Release 🚀
+
+### 🎉 Welcome to the first stable release!
+
+After months of development and testing, Terminal History Outline is now production-ready.
+
+### ✨ Key Features
+
+- 📝 **Command History** - Automatically captures every command and its output
+- 🟢🔴🟡 **Status Indicators** - Visual status (Success/Error/Running)
+- 🔧 **Action Buttons** - Rerun, Copy, Delete directly on each entry
+- 📋 **Copy Options** - Copy command, output, or both
+- 🔒 **Security Redaction** - Detects and redacts sensitive data
+- 📊 **Privacy Dashboard** - View and manage security settings
+- 🎨 **Clean Display** - Strips ANSI codes for readable output
+- 💾 **Persistent** - History survives VS Code restarts
+- ⏱️ **Time Display** - Shows time since command execution
+
+### 🧪 Quality Assurance
+
+- ✅ **57 Passing Tests** - Comprehensive test coverage
+- ✅ **ESM Support** - Modern module system
+- ✅ **Clean Packaging** - No security warnings
+- ✅ **Full Documentation** - Complete JSDoc comments
+
+### 📦 Installation
+
+**From VS Code Marketplace:**
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search for "Terminal History Outline"
+4. Click Install
+
+**From VSIX:**
+1. Download the `.vsix` file from the release assets
+2. In VS Code, go to Extensions → "..." → Install from VSIX
+3. Select the downloaded file
+
+### 🔜 Roadmap
+
+- **v1.1.0** - Groups & Organization
+- **v1.2.0** - AI & Agent Integration
+- **v1.3.0** - Export & Save
+- **v1.4.0** - Customization & UX
+
 ## v0.4.3 - Constants Extraction & Comprehensive Documentation (2026-06-18)
 
 ### Added

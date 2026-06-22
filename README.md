@@ -1,9 +1,9 @@
 # Terminal History Outline
 
-[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.93%2B-blue.svg)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Download VSIX](https://img.shields.io/badge/download-.vsix-blue.svg)](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.5.0.vsix)
+[![Download VSIX](https://img.shields.io/badge/download-.vsix-blue.svg)](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-1.0.0.vsix)
 
 View and manage your terminal command history directly in the VS Code Explorer outline view.
 
@@ -28,11 +28,11 @@ View and manage your terminal command history directly in the VS Code Explorer o
 
 1. Download the latest `.vsix` file:
    - From [GitHub Releases](https://github.com/chamren86/terminal-history-outline/releases)
-   - Or via direct link: [Download Latest VSIX](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.4.vsix)
+   - Or via direct link: [Download Latest VSIX](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-1.0.0.vsix)
 
 2. Install the extension:
    - **VS Code UI**: Extensions → `...` → Install from VSIX → Select the file
-   - **Command Line**: `code --install-extension terminal-history-outline-0.4.4.vsix`
+   - **Command Line**: `code --install-extension terminal-history-outline-1.0.0.vsix`
 
 ### From VS Code Marketplace (Coming Soon)
 The extension will be available on the Marketplace after beta testing.
@@ -152,8 +152,6 @@ If commands aren't being captured, ensure Shell Integration is enabled:
 
 ## Roadmap
 
-**v0.5.0** - Usability & Productivity (Copy, Search, Delete)  
-**v1.0.0** - Production Release
 **v1.1.0** - Groups & Organization  
 **v1.2.0** - AI & Agent Integration  
 **v1.3.0** - Export & Save  
@@ -163,28 +161,6 @@ If commands aren't being captured, ensure Shell Integration is enabled:
 [Feature Details](docs/FEATURES.md)
 
 ## Release Notes
-
-### v0.4.1 - Testing Infrastructure & Pre-commit (2026-06-17)
-- 🛠️ Pre-commit and pre-push validation scripts
-- ⚡ Migrated from mocha to vitest
-- 🐳 `act` integration for local GitHub Actions testing
-- ✅ 49 passing tests
-- 📦 VSIX package ready for distribution
-
-### v0.4.0 - Security & Privacy
-- 🔒 Sensitive data detection (passwords, API keys, tokens)
-- 🔒 Auto-redaction with `[REDACTED]`
-- 📊 Privacy dashboard
-- ✅ 49 passing tests
-
-### v0.3.0 - Testing Infrastructure
-- ✅ Mocha test framework with 49 tests
-- ✅ Cleaner module with no VS Code dependencies
-
-### v0.2.0 - Stable Release
-- 🟢 Colored status indicators
-- 📝 Command output capture
-- 🔄 Rerun and copy actions
 
 [Full Release Notes](docs/RELEASE-NOTES.md)
 
