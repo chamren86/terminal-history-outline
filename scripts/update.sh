@@ -1,49 +1,31 @@
 #!/bin/bash
-# scripts/update.sh
-# Build, package, and install the extension locally
-
-set -e
 
 echo "========================================"
 echo "🔧 Updating extension"
 echo "========================================"
 
-# 1. Clean and compile
-echo ""
+# Clean and build
 echo "🔨 Building..."
 npm run compile
 
-# 2. Remove old VSIX files
-echo ""
+# Remove test files from out directory
+echo "🧹 Removing test files from out directory..."
+rm -rf out/test
+find out -name "*.test.js" -type f -delete 2>/dev/null || true
+find out -name "*.map" -type f -delete 2>/dev/null || true
+
+# Remove old VSIX files
 echo "🧹 Removing old VSIX files..."
-rm -f terminal-history-outline-*.vsix
+rm -f *.vsix 2>/dev/null || true
 
-# 3. Package
-echo ""
+# Package with skip security check
 echo "📦 Packaging..."
-vsce package
+vsce package --allow-missing-repository
 
-# 4. Get the VSIX filename
-VSIX_FILE=$(ls terminal-history-outline-*.vsix | head -1)
-echo ""
-echo "📄 VSIX file: $VSIX_FILE"
+# Install
+echo "📦 Installing..."
+code --install-extension terminal-history-outline-0.5.0.vsix --force
 
-# 5. Uninstall old version (ignore if not installed)
 echo ""
-echo "🗑️  Uninstalling old version..."
-code --uninstall-extension chamren86.terminal-history-outline || echo "Extension not installed, continuing..."
-
-# 6. Install new version
-echo ""
-echo "📥 Installing new version..."
-code --install-extension "$VSIX_FILE" --force
-
-# 7. Done
-echo ""
-echo "========================================"
-echo "✅ Extension updated successfully!"
-echo "📦 Version: $(cat package.json | grep '"version"' | head -1 | sed 's/.*: "\(.*\)",/\1/')"
-echo "========================================"
-echo ""
-echo "🔄 Reload VS Code to see changes:"
-echo "   Ctrl+Shift+P → Developer: Reload Window"
+echo "✅ Update complete!"
+echo "🔄 Please reload VS Code (Ctrl+Shift+P → Developer: Reload Window)"

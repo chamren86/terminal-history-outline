@@ -1,9 +1,12 @@
 {
   "name": "terminal-history-outline",
-  "type": "module",
   "displayName": "Terminal History Outline",
-  "description": "View and manage terminal command history in the Explorer outline view",
-  "version": "0.4.4",
+  "description": "View and manage your terminal command history directly in the VS Code Explorer outline view.",
+  "version": "0.5.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chamren86/terminal-history-outline.git"
+  },
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -11,34 +14,74 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onCommand:terminalHistory.clear",
+    "onCommand:terminalHistory.rerun",
+    "onCommand:terminalHistory.copyCommand",
+    "onCommand:terminalHistory.copyOutput",
+    "onCommand:terminalHistory.deleteEntry",
+    "onCommand:terminalHistory.searchHistory",
+    "onView:terminalHistory"
   ],
   "main": "./out/extension.js",
+  "type": "module",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "vitest run",
+    "test:unit": "vitest run --reporter=verbose",
+    "test:full": "npm run clean && npm install && npm run compile && npm test",
+    "test:coverage": "vitest run --coverage",
+    "precommit": "npm run test:unit",
+    "prepush": "npm run test:full",
+    "clean": "rm -rf out node_modules",
+    "quick": "./scripts/quick-test.sh",
+    "package": "vsce package",
+    "build": "npm run compile && npm run package",
+    "update": "./scripts/update.sh"
+  },
+  "dependencies": {
+    "ansi-regex": "^6.0.1",
+    "strip-ansi": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.93.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
   "contributes": {
-    "views": {
-      "explorer": [
-        {
-          "id": "terminalHistoryOutline",
-          "name": "Terminal History",
-          "icon": "$(history)"
-        }
-      ]
-    },
     "commands": [
       {
         "command": "terminalHistory.clear",
         "title": "Clear Terminal History",
-        "icon": "$(clear-all)"
+        "icon": "$(trash)"
       },
-      {
+            {
         "command": "terminalHistory.rerun",
         "title": "Rerun Command",
-        "icon": "$(run)"
+        "icon": "$(play)"
+      },
+      {
+        "command": "terminalHistory.copyCommand",
+        "title": "Copy Command",
+        "icon": "$(repl)"
       },
       {
         "command": "terminalHistory.copyOutput",
         "title": "Copy Output",
+        "icon": "$(output)"
+      },
+      {
+        "command": "terminalHistory.copyCommandAndOutput",
+        "title": "Copy Command and Output",
         "icon": "$(copy)"
+      },
+      {
+        "command": "terminalHistory.deleteEntry",
+        "title": "Delete Entry",
+        "icon": "$(close)"
       },
       {
         "command": "terminalHistory.privacyDashboard",
@@ -46,34 +89,69 @@
         "icon": "$(shield)"
       },
       {
-        "command": "terminalHistory.clearSensitive",
-        "title": "Clear Sensitive Commands",
-        "icon": "$(trash)"
+        "command": "terminalHistory.showActions",
+        "title": "Show Actions",
+        "icon": "$(ellipsis)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "terminalHistory.clear",
-          "when": "view == terminalHistoryOutline",
-          "group": "navigation"
+          "command": "terminalHistory.searchHistory",
+          "group": "navigation",
+          "when": "view == terminalHistory"
         },
         {
+          "command": "terminalHistory.clear",
+          "group": "navigation",
+          "when": "view == terminalHistory"
+        },
+                {
           "command": "terminalHistory.privacyDashboard",
-          "when": "view == terminalHistoryOutline",
-          "group": "navigation"
+          "group": "navigation",
+          "when": "view == terminalHistory"
         }
       ],
       "view/item/context": [
         {
           "command": "terminalHistory.rerun",
-          "when": "viewItem == commandItem",
+          "when": "view == terminalHistory && viewItem == historyItem",
+          "group": "inline"
+        },
+        {
+          "command": "terminalHistory.copyCommand",
+          "when": "view == terminalHistory && viewItem == historyItem",
           "group": "inline"
         },
         {
           "command": "terminalHistory.copyOutput",
-          "when": "viewItem == commandItem",
+          "when": "view == terminalHistory && viewItem == historyItem",
           "group": "inline"
+        },
+        {
+          "command": "terminalHistory.copyCommandAndOutput",
+          "when": "view == terminalHistory && viewItem == historyItem",
+          "group": "inline"
+        },
+        {
+          "command": "terminalHistory.deleteEntry",
+          "when": "view == terminalHistory && viewItem == historyItem",
+          "group": "inline"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "terminalHistory.searchHistory",
+        "key": "ctrl+f",
+        "when": "view == terminalHistory && listFocus && !inputFocus"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "terminalHistory",
+          "name": "Terminal History"
         }
       ]
     },
@@ -83,12 +161,12 @@
         "terminalHistory.maxHistorySize": {
           "type": "number",
           "default": 100,
-          "description": "Maximum number of commands to keep in history"
+          "description": "Maximum number of commands to store in history"
         },
         "terminalHistory.security.detectionEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable sensitive data detection in commands"
+          "description": "Enable/disable sensitive data detection"
         },
         "terminalHistory.security.redactionLevel": {
           "type": "string",
@@ -99,66 +177,34 @@
             "block"
           ],
           "default": "warn",
-          "description": "How to handle sensitive data: off (ignore), warn (show warning), redact (replace with [REDACTED]), block (don't save)"
+          "description": "How to handle sensitive data"
         },
         "terminalHistory.security.warnOnDetection": {
           "type": "boolean",
           "default": true,
-          "description": "Show warning notification when sensitive data is detected"
+          "description": "Show warning when sensitive data is detected"
         },
         "terminalHistory.security.customPatterns": {
           "type": "array",
-          "default": [],
-          "description": "Custom regex patterns for detecting sensitive data",
           "items": {
             "type": "string"
-          }
+          },
+          "default": [],
+          "description": "Custom regex patterns for sensitive data detection"
         },
         "terminalHistory.security.excludedCommands": {
           "type": "array",
-          "default": [],
-          "description": "Commands matching these patterns will not be saved (regex supported)",
           "items": {
             "type": "string"
-          }
+          },
+          "default": [],
+          "description": "Commands to exclude from history (regex supported)"
         }
       }
     }
   },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "./scripts/build.sh",
-    "watch": "tsc -watch -p ./",
-    "test": "npm run compile && node test/run-tests.js",
-    "test:vitest": "vitest run",
-    "test:watch": "vitest",
-    "test:full": "./scripts/test.sh",
-    "test:act": "act -j test --pull=false",
-    "precommit": "./scripts/precommit.sh",
-    "prepush": "./scripts/prepush.sh",
-    "quick": "./scripts/quick-test.sh",
-    "package": "vsce package",
-    "build": "npm run compile && npm run package",
-    "update": "./scripts/update.sh"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.0",
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.93.0",
-    "mocha": "^10.0.0",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.22.4",
-    "typescript": "^5.0.0",
-    "vitest": "^4.1.9"
-  },
-  "dependencies": {
-    "strip-ansi": "^7.2.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/chamren86/terminal-history-outline.git"
-  },
-  "author": "chamren86",
-  "license": "MIT",
-  "publisher": "chamren86"
+  "allowScripts": {
+    "@vscode/vsce-sign@2.0.9": true,
+    "keytar@7.9.0": true
+  }
 }

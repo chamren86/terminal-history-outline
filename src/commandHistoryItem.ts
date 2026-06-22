@@ -1,12 +1,10 @@
+/**
+ * @file commandHistoryItem.ts
+ * @description Command history item class for the Terminal History Outline extension.
+ */
+
 import { cleanTerminalOutput } from './cleaner.js';
 import { CONTEXT_VALUES, MAX_OUTPUT_PREVIEW_LENGTH, MAX_OUTPUT_DISPLAY_LENGTH } from './constants/index.js';
-
-// This class doesn't need vscode directly - it just extends TreeItem
-// But we need a minimal TreeItem class for testing
-// In production, this will be replaced by the actual vscode TreeItem
-
-// This is a minimal version that works in both production and testing
-// In production, this will be extended by the actual vscode.TreeItem
 
 export class CommandHistoryItem {
     private rawOutput: string = '';
@@ -36,11 +34,12 @@ export class CommandHistoryItem {
         this.tooltip = `${commandText}\nTerminal: ${terminalName}\nTime: ${timestamp.toLocaleString()}\nCWD: ${cwd || 'unknown'}\nExit Code: ${exitCode === null ? 'running' : exitCode}\n\nOutput:\n${outputPreview}${isTruncated ? '...' : ''}`;
         
         this.applyStatusStyling();
-        this.contextValue = CONTEXT_VALUES.COMMAND_ITEM;
+        this.contextValue = CONTEXT_VALUES.HISTORY_ITEM; // Changed from COMMAND_ITEM to HISTORY_ITEM
         this.collapsibleState = 1; // Collapsed
     }
     
     private applyStatusStyling() {
+        // No icon path - we use emojis in the label
         this.iconPath = undefined;
         
         if (this.exitCode === null) {

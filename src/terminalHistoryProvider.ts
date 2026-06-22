@@ -1,3 +1,8 @@
+/**
+ * @file terminalHistoryProvider.ts
+ * @description Tree data provider for the Terminal History view in VS Code Explorer.
+ */
+
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -45,9 +50,20 @@ export class VSCodeCommandHistoryItem extends vscode.TreeItem {
         this._item = item;
         this.tooltip = item.tooltip;
         this.iconPath = item.iconPath;
-        this.contextValue = item.contextValue;
+        this.contextValue = CONTEXT_VALUES.HISTORY_ITEM;
         this.description = item.description;
         this.label = item.label;
+        
+        // Primary action: Click to copy output
+        // This will show a copy icon on the item
+        this.command = {
+            command: 'terminalHistory.copyOutput',
+            title: 'Copy Output',
+            arguments: [{ 
+                output: item.output, 
+                command: item.commandText 
+            }]
+        };
     }
     
     get commandText(): string { return this._item.commandText; }
@@ -71,6 +87,8 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCo
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
     
     private history: CommandHistoryItem[] = [];
+    private filteredHistory: CommandHistoryItem[] = [];
+    private filterText: string = '';
     private maxHistorySize: number = MAX_HISTORY_SIZE;
     private storagePath: string;
     
@@ -104,6 +122,7 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCo
                         item.exitCode
                     );
                 });
+                this.applyFilter();
             }
         } catch (error) {
             // Silently fail - no history to load
@@ -127,6 +146,19 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCo
         }
     }
     
+    private applyFilter() {
+        if (!this.filterText) {
+            this.filteredHistory = [...this.history];
+        } else {
+            const lowerFilter = this.filterText.toLowerCase();
+            this.filteredHistory = this.history.filter(item => 
+                item.commandText.toLowerCase().includes(lowerFilter) ||
+                (item.output && item.output.toLowerCase().includes(lowerFilter))
+            );
+        }
+        this.refresh();
+    }
+    
     public refresh(): void {
         this._onDidChangeTreeData.fire(undefined);
     }
@@ -139,7 +171,7 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCo
         }
         
         this.saveHistory();
-        this.refresh();
+        this.applyFilter();
     }
     
     public updateCommand(updatedItem: CommandHistoryItem) {
@@ -160,14 +192,38 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCo
             
             this.history[index] = newItem;
             this.saveHistory();
-            this.refresh();
+            this.applyFilter();
+        }
+    }
+    
+    public deleteEntry(item: CommandHistoryItem) {
+        const index = this.history.findIndex(h => 
+            h.commandText === item.commandText && 
+            h.timestamp.getTime() === item.timestamp.getTime()
+        );
+        
+        if (index !== -1) {
+            this.history.splice(index, 1);
+            this.saveHistory();
+            this.applyFilter();
         }
     }
     
     public clearHistory() {
         this.history = [];
         this.saveHistory();
-        this.refresh();
+        this.applyFilter();
+    }
+    
+    public setFilter(filter: string) {
+        this.filterText = filter.trim();
+        this.applyFilter();
+        
+        if (this.filterText) {
+            vscode.window.showInformationMessage(`Filtering: "${this.filterText}" (${this.filteredHistory.length} commands)`);
+        } else {
+            vscode.window.showInformationMessage('Filter cleared');
+        }
     }
     
     public getCommandCount(): number {
@@ -187,8 +243,7 @@ export class TerminalHistoryProvider implements vscode.TreeDataProvider<VSCodeCo
     
     async getChildren(element?: VSCodeCommandHistoryItem | OutputTreeItem): Promise<(VSCodeCommandHistoryItem | OutputTreeItem)[]> {
         if (!element) {
-            // Return all commands as VSCodeCommandHistoryItem
-            return this.history.map(item => new VSCodeCommandHistoryItem(item));
+            return this.filteredHistory.map(item => new VSCodeCommandHistoryItem(item));
         }
         
         if (element instanceof VSCodeCommandHistoryItem) {

@@ -1,16 +1,6 @@
 /**
  * @file extension.ts
  * @description Main entry point for the Terminal History Outline VS Code extension.
- * 
- * This file handles:
- * - Extension activation and lifecycle management
- * - Registration of VS Code commands (clear, rerun, copy output, privacy dashboard)
- * - Terminal command capture using VS Code's Shell Integration API
- * - Multi-layer exit code detection for accurate status indicators
- * - Security checks for sensitive data in commands
- * - Status bar integration showing command count
- * 
- * @module extension
  */
 
 import * as vscode from 'vscode';
@@ -39,18 +29,6 @@ import {
 
 let currentHistoryProvider: TerminalHistoryProvider | undefined;
 
-/**
- * Called when the extension is activated by VS Code.
- * 
- * @param context - The VS Code extension context that provides lifecycle management.
- *                  Used to register subscriptions that are cleaned up on deactivation.
- * 
- * @description
- * This function:
- * 1. Loads security configuration from VS Code settings
- * 2. Listens for configuration changes to reload security settings
- * 3. Initializes the extension components
- */
 export function activate(context: vscode.ExtensionContext) {
     loadConfigFromVSCode();
     
@@ -63,21 +41,6 @@ export function activate(context: vscode.ExtensionContext) {
     initializeExtension(context);
 }
 
-/**
- * Initializes the extension by setting up all components and subscriptions.
- * 
- * @param context - The VS Code extension context for registering subscriptions.
- * 
- * @description
- * This function:
- * 1. Creates the TerminalHistoryProvider and registers the TreeView
- * 2. Registers all VS Code commands
- * 3. Sets up terminal command capture with security checks
- * 4. Manages the status bar item
- * 
- * @see TerminalHistoryProvider
- * @see registerPrivacyCommands
- */
 function initializeExtension(context: vscode.ExtensionContext) {
     if (currentHistoryProvider) {
         currentHistoryProvider.clearHistory();
@@ -92,7 +55,8 @@ function initializeExtension(context: vscode.ExtensionContext) {
     
     context.subscriptions.push(treeView);
     
-    // Register commands
+    // === v0.5.0 Commands ===
+    
     const clearCommand = vscode.commands.registerCommand('terminalHistory.clear', () => {
         if (currentHistoryProvider) {
             currentHistoryProvider.clearHistory();
@@ -106,6 +70,23 @@ function initializeExtension(context: vscode.ExtensionContext) {
         terminal.sendText(item.commandText);
     });
     
+    const copyCommand = vscode.commands.registerCommand('terminalHistory.copyCommand', async (item: CommandHistoryItem) => {
+        if (!item || !item.commandText) {
+            vscode.window.showWarningMessage('No command to copy');
+            return;
+        }
+        
+        try {
+            await vscode.env.clipboard.writeText(item.commandText);
+            const preview = item.commandText.length > 50 
+                ? item.commandText.substring(0, 50) + '...' 
+                : item.commandText;
+            vscode.window.showInformationMessage(`✓ Command copied: ${preview}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to copy command: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    });
+    
     const copyOutputCommand = vscode.commands.registerCommand('terminalHistory.copyOutput', (args: { output: string, command: string }) => {
         if (args.output) {
             vscode.env.clipboard.writeText(args.output);
@@ -114,75 +95,113 @@ function initializeExtension(context: vscode.ExtensionContext) {
             vscode.window.showWarningMessage('No output captured for this command');
         }
     });
+
+    // Register copy command and output
+    const copyCommandAndOutput = vscode.commands.registerCommand(
+        'terminalHistory.copyCommandAndOutput',
+        async (item: CommandHistoryItem) => {
+            if (!item) {
+                vscode.window.showWarningMessage('No command to copy');
+                return;
+            }
+            
+            try {
+                const commandText = item.commandText || '';
+                const outputText = item.output || '(no output captured)';
+                const combinedText = `Command: ${commandText}\n\nOutput:\n${outputText}`;
+                
+                await vscode.env.clipboard.writeText(combinedText);
+                
+                const preview = combinedText.length > 100 
+                    ? combinedText.substring(0, 100) + '...' 
+                    : combinedText;
+                vscode.window.showInformationMessage(`✓ Command & output copied: ${preview}`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to copy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+    );
     
-    context.subscriptions.push(clearCommand, rerunCommand, copyOutputCommand);
+    const deleteEntryCommand = vscode.commands.registerCommand('terminalHistory.deleteEntry', async (item: CommandHistoryItem) => {
+        if (!item || !currentHistoryProvider) {
+            return;
+        }
+        
+        const confirmation = await vscode.window.showWarningMessage(
+            `Delete command: "${item.commandText}"?`,
+            { modal: true },
+            'Delete',
+            'Cancel'
+        );
+        
+        if (confirmation === 'Delete') {
+            currentHistoryProvider.deleteEntry(item);
+            vscode.window.showInformationMessage('Command deleted from history');
+        }
+    });
     
-    // Register privacy commands
+    const searchCommand = vscode.commands.registerCommand('terminalHistory.searchHistory', async () => {
+        if (!currentHistoryProvider) {
+            return;
+        }
+        
+        const query = await vscode.window.showInputBox({
+            prompt: 'Search terminal history',
+            placeHolder: 'Type to filter commands...',
+            ignoreFocusOut: true,
+            value: ''
+        });
+        
+        if (query !== undefined) {
+            currentHistoryProvider.setFilter(query);
+        }
+    });
+    
+    context.subscriptions.push(
+        clearCommand, 
+        rerunCommand, 
+        copyCommand, 
+        copyOutputCommand,
+        copyCommandAndOutput,
+        deleteEntryCommand,
+        searchCommand
+    );
+    
     if (currentHistoryProvider) {
         registerPrivacyCommands(context, currentHistoryProvider);
     }
     
-    // Listen for terminal commands and capture output
     const startDisposable = vscode.window.onDidStartTerminalShellExecution((event) => {
         let commandLine = event.execution.commandLine.value;
         const terminalName = event.terminal.name;
         const timestamp = new Date();
         
-        // Clean the command by removing common shell flags
         for (const pattern of COMMAND_CLEAN_PATTERNS) {
             commandLine = commandLine.replace(pattern, '');
         }
         
-        // SECURITY: Check if command should be excluded by user settings
         if (isExcludedCommand(commandLine)) {
-            vscode.window.showInformationMessage(`🔒 Command excluded by security settings: ${commandLine.substring(0, MAX_COMMAND_DISPLAY_LENGTH)}...`);
             return;
         }
         
-        // SECURITY: Check for sensitive data (passwords, API keys, etc.)
         const sensitivePatterns = detectSensitiveData(commandLine);
         const config = getSecurityConfig();
-        
-        // Handle sensitive data based on user configuration
         let processedCommand = commandLine;
         let shouldSave = true;
         
         if (sensitivePatterns.length > 0 && config.detectionEnabled) {
             const autoResult = shouldRedactOrBlock(commandLine);
-            
             if (autoResult.action === RedactionAction.BLOCK) {
-                vscode.window.showWarningMessage(`🔒 Command blocked: ${autoResult.reason}`);
                 return;
             } else if (autoResult.action === RedactionAction.REDACT) {
                 processedCommand = redactSensitiveData(commandLine);
-                vscode.window.showInformationMessage(`🔒 Sensitive data redacted from command`);
             } else {
                 handleSensitiveCommand(commandLine, sensitivePatterns).then((action) => {
                     if (action === RedactionAction.BLOCK) {
                         shouldSave = false;
-                        vscode.window.showWarningMessage('🔒 Command blocked by user');
                         return;
                     } else if (action === RedactionAction.REDACT) {
                         processedCommand = redactSensitiveData(commandLine);
-                        vscode.window.showInformationMessage('🔒 Sensitive data redacted from command');
-                        if (currentHistoryProvider) {
-                            const history = currentHistoryProvider.getHistory();
-                            const latestItem = history.find(item => 
-                                item.commandText === commandLine && 
-                                item.exitCode === null
-                            );
-                            if (latestItem) {
-                                const newItem = new CommandHistoryItem(
-                                    processedCommand,
-                                    latestItem.terminalName,
-                                    latestItem.timestamp,
-                                    latestItem.cwd,
-                                    latestItem.output,
-                                    latestItem.exitCode
-                                );
-                                currentHistoryProvider.updateCommand(newItem);
-                            }
-                        }
                     }
                 });
             }
@@ -192,7 +211,6 @@ function initializeExtension(context: vscode.ExtensionContext) {
             return;
         }
         
-        // Get working directory from shell integration
         let cwd = '';
         try {
             const shellIntegration = event.terminal as any;
@@ -200,17 +218,15 @@ function initializeExtension(context: vscode.ExtensionContext) {
                 cwd = shellIntegration.shellIntegration.cwd.fsPath;
             }
         } catch (error) {
-            // CWD not available - use empty string
+            // CWD not available
         }
         
-        // Create history item with processed command
         const historyItem = new CommandHistoryItem(processedCommand, terminalName, timestamp, cwd);
         
         if (currentHistoryProvider) {
             currentHistoryProvider.addCommand(historyItem);
         }
         
-        // Capture output asynchronously
         const outputPromise = new Promise<string>(async (resolve) => {
             let output = '';
             try {
@@ -219,49 +235,26 @@ function initializeExtension(context: vscode.ExtensionContext) {
                 }
                 resolve(output);
             } catch (error) {
-                resolve(`[Error capturing output: ${error}]`);
+                resolve(output || `[Error capturing output: ${error}]`);
             }
         });
         
         outputPromise.then((fullOutput) => {
             historyItem.output = fullOutput;
             
-            // Multi-layer exit code detection
-            let exitCode = null;
-            
-            // Layer 1: Try to get exit code from the event
+            let exitCode: number | null = null;
             try {
-                const exec = event.execution as any;
-                if (exec.exitCode !== undefined && exec.exitCode !== null) {
-                    exitCode = exec.exitCode;
+                const terminalAny = event.terminal as any;
+                if (terminalAny.exitStatus !== undefined && terminalAny.exitStatus !== null) {
+                    exitCode = terminalAny.exitStatus;
                 }
             } catch (e) {
-                // Ignore - continue to next layer
+                // Ignore
             }
             
-            // Layer 2: Try to get exit code from the terminal
             if (exitCode === null) {
-                try {
-                    const terminal = event.terminal as any;
-                    if (terminal.exitStatus !== undefined && terminal.exitStatus !== null) {
-                        exitCode = terminal.exitStatus;
-                    }
-                } catch (e) {
-                    // Ignore - continue to next layer
-                }
-            }
-            
-            // Layer 3: Fall back to output analysis using centralized patterns
-            if (exitCode === null) {
-                // Create a regex from the centralized ERROR_DETECTION_PATTERNS
                 const errorRegex = new RegExp(ERROR_DETECTION_PATTERNS.join('|'), 'i');
-                const hasError = errorRegex.test(fullOutput);
-                
-                if (hasError) {
-                    exitCode = 1;
-                } else {
-                    exitCode = 0;
-                }
+                exitCode = errorRegex.test(fullOutput) ? 1 : 0;
             }
             
             historyItem.exitCode = exitCode;
@@ -274,16 +267,17 @@ function initializeExtension(context: vscode.ExtensionContext) {
     
     context.subscriptions.push(startDisposable);
     
-    // Status bar item showing command count
     const statusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment[STATUS_BAR.ALIGNMENT],
         STATUS_BAR.PRIORITY
     );
+    
     const updateStatusBar = () => {
         if (currentHistoryProvider) {
             statusBarItem.text = `$(${STATUS_BAR_ICON}) ${currentHistoryProvider.getCommandCount()}`;
         }
     };
+    
     statusBarItem.tooltip = 'Terminal History Outline';
     statusBarItem.show();
     updateStatusBar();
@@ -294,14 +288,4 @@ function initializeExtension(context: vscode.ExtensionContext) {
     }
 }
 
-/**
- * Called when the extension is deactivated by VS Code.
- * 
- * @returns {void}
- * 
- * @description
- * This function is called when VS Code is shutting down or the extension is being disabled.
- * Cleanup of resources is handled automatically through VS Code's subscription system,
- * so no explicit cleanup is required in this function.
- */
 export function deactivate() {}

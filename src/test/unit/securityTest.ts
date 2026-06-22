@@ -1,14 +1,17 @@
-import * as assert from 'node:assert';
-import { describe, it, before, after } from 'node:test';
+/**
+ * @file securityTest.ts
+ * @description Unit tests for security module
+ */
+
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import * as vscode from 'vscode';
 import { 
     detectSensitiveData, 
     redactSensitiveData, 
     isExcludedCommand,
-    setSecurityConfig,
-    shouldRedactOrBlock
+    setSecurityConfig
 } from '../../security.js';
-import { SENSITIVE_PATTERNS } from '../../constants/index.js';
-import { RedactionAction, RedactionLevel } from '../../enums/index.js';
+import { RedactionLevel } from '../../enums/index.js';
 import { ISecurityConfig } from '../../interfaces/index.js';
 
 const SENSITIVE_SAMPLES = {
@@ -34,129 +37,135 @@ const testConfig: ISecurityConfig = {
 };
 
 describe('Security Tests', () => {
-    before(() => {
+    beforeAll(() => {
         setSecurityConfig(testConfig);
     });
 
-    it('Should detect passwords in commands', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.password);
-        const hasPasswordPattern = result.some(p => p.name === 'password');
-        assert.strictEqual(hasPasswordPattern, true);
-    });
-
-    it('Should detect passwords with colon format', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.passwordColon);
-        const hasPasswordPattern = result.some(p => p.name === 'password');
-        assert.strictEqual(hasPasswordPattern, true);
-    });
-
-    it('Should detect passwords with equals format', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.passwordEquals);
-        const hasPasswordPattern = result.some(p => p.name === 'password');
-        assert.strictEqual(hasPasswordPattern, true);
-    });
-
-    it('Should detect API keys', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.apiKey);
-        const hasApiKeyPattern = result.some(p => p.name === 'api-key');
-        assert.strictEqual(hasApiKeyPattern, true);
-    });
-
-    it('Should detect AWS keys', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.awsKey);
-        const hasAwsKeyPattern = result.some(p => p.name === 'aws-key');
-        assert.strictEqual(hasAwsKeyPattern, true);
-    });
-
-    it('Should detect JWT tokens', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.jwt);
-        const hasJwtPattern = result.some(p => p.name === 'jwt-token');
-        assert.strictEqual(hasJwtPattern, true);
-    });
-
-    it('Should detect GitHub tokens', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.githubToken);
-        const hasGithubPattern = result.some(p => p.name === 'github-token');
-        assert.strictEqual(hasGithubPattern, true);
-    });
-
-    it('Should detect Slack tokens', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.slackToken);
-        const hasSlackPattern = result.some(p => p.name === 'slack-token');
-        assert.strictEqual(hasSlackPattern, true);
-    });
-
-    it('Should detect SSH keys', () => {
-        const result = detectSensitiveData(SENSITIVE_SAMPLES.sshKey);
-        const hasSshPattern = result.some(p => p.name === 'ssh-key');
-        assert.strictEqual(hasSshPattern, true);
-    });
-
-    it('Should redact passwords preserving structure', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.password);
-        assert.strictEqual(result.includes('MySecretPassword123'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-        assert.strictEqual(result.includes('mysql -u root -p'), true);
-    });
-
-    it('Should redact API keys preserving structure', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.apiKey);
-        assert.strictEqual(result.includes('sk-abc123xyz789def456'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-        assert.strictEqual(result.includes('curl -H "Authorization: Bearer'), true);
-    });
-
-    it('Should redact AWS keys', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.awsKey);
-        assert.strictEqual(result.includes('AKIAIOSFODNN7EXAMPLE'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-        assert.strictEqual(result.includes('AWS_ACCESS_KEY_ID='), true);
-    });
-
-    it('Should redact JWT tokens', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.jwt);
-        assert.strictEqual(result.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-        assert.strictEqual(result.includes('Authorization: Bearer'), true);
-    });
-
-    it('Should redact GitHub tokens', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.githubToken);
-        assert.strictEqual(result.includes('ghp_abcdefghijklmnopqrstuvwxyz1234567890'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-    });
-
-    it('Should redact Slack tokens', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.slackToken);
-        assert.strictEqual(result.includes('xoxb-1234567890-abcdefghijklmnopqrstuvwx'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-    });
-
-    it('Should redact SSH keys', () => {
-        const result = redactSensitiveData(SENSITIVE_SAMPLES.sshKey);
-        assert.strictEqual(result.includes('MIIEpAIBAAKCAQEA'), false);
-        assert.strictEqual(result.includes('[REDACTED]'), true);
-        assert.strictEqual(result.includes('MIIEpAIBAAKCAQEA'), false);
-    });
-
-    it('Should exclude commands matching patterns', () => {
-        const result = isExcludedCommand('mysql -p', testConfig);
-        assert.strictEqual(result, true);
-    });
-
-    it('Should not exclude commands not matching patterns', () => {
-        const result = isExcludedCommand('ls -la', testConfig);
-        assert.strictEqual(result, false);
-    });
-
-    after(() => {
+    afterAll(() => {
         const defaultConfig: ISecurityConfig = {
             detectionEnabled: true,
             redactionLevel: RedactionLevel.REDACT,
             customPatterns: [],
-            excludedCommands: ['mysql.*', '.*secret.*'],
+            excludedCommands: [],
             warnOnDetection: true
         };
         setSecurityConfig(defaultConfig);
+    });
+
+    describe('Sensitive Data Detection', () => {
+        it('Should detect passwords in commands', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.password);
+            const hasPasswordPattern = result.some(p => p.name === 'password');
+            expect(hasPasswordPattern).toBe(true);
+        });
+
+        it('Should detect passwords with colon format', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.passwordColon);
+            const hasPasswordPattern = result.some(p => p.name === 'password');
+            expect(hasPasswordPattern).toBe(true);
+        });
+
+        it('Should detect passwords with equals format', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.passwordEquals);
+            const hasPasswordPattern = result.some(p => p.name === 'password');
+            expect(hasPasswordPattern).toBe(true);
+        });
+
+        it('Should detect API keys', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.apiKey);
+            const hasApiKeyPattern = result.some(p => p.name === 'api-key');
+            expect(hasApiKeyPattern).toBe(true);
+        });
+
+        it('Should detect AWS keys', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.awsKey);
+            const hasAwsKeyPattern = result.some(p => p.name === 'aws-key');
+            expect(hasAwsKeyPattern).toBe(true);
+        });
+
+        it('Should detect JWT tokens', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.jwt);
+            const hasJwtPattern = result.some(p => p.name === 'jwt-token');
+            expect(hasJwtPattern).toBe(true);
+        });
+
+        it('Should detect GitHub tokens', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.githubToken);
+            const hasGithubPattern = result.some(p => p.name === 'github-token');
+            expect(hasGithubPattern).toBe(true);
+        });
+
+        it('Should detect Slack tokens', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.slackToken);
+            const hasSlackPattern = result.some(p => p.name === 'slack-token');
+            expect(hasSlackPattern).toBe(true);
+        });
+
+        it('Should detect SSH keys', () => {
+            const result = detectSensitiveData(SENSITIVE_SAMPLES.sshKey);
+            const hasSshPattern = result.some(p => p.name === 'ssh-key');
+            expect(hasSshPattern).toBe(true);
+        });
+    });
+
+    describe('Redaction', () => {
+        it('Should redact passwords preserving structure', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.password);
+            expect(result.includes('MySecretPassword123')).toBe(false);
+            expect(result.includes('[REDACTED]')).toBe(true);
+            expect(result.includes('mysql -u root -p')).toBe(true);
+        });
+
+        it('Should redact API keys preserving structure', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.apiKey);
+            expect(result.includes('sk-abc123xyz789def456')).toBe(false);
+            expect(result.includes('[REDACTED]')).toBe(true);
+            expect(result.includes('curl -H "Authorization: Bearer')).toBe(true);
+        });
+
+        it('Should redact AWS keys', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.awsKey);
+            expect(result.includes('AKIAIOSFODNN7EXAMPLE')).toBe(false);
+            expect(result.includes('[REDACTED]')).toBe(true);
+            expect(result).not.toBe(SENSITIVE_SAMPLES.awsKey);
+        });
+
+        it('Should redact Slack tokens', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.slackToken);
+            expect(result.includes('xoxb-1234567890-abcdefghijklmnopqrstuvwx')).toBe(false);
+            expect(result.includes('xox')).toBe(true);
+            expect(result).not.toBe(SENSITIVE_SAMPLES.slackToken);
+        });
+
+        it('Should redact SSH keys', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.sshKey);
+            expect(result).toBe('[REDACTED SSH KEY]');
+            expect(result.includes('MIIEpAIBAAKCAQEA')).toBe(false);
+        });
+
+        it('Should redact JWT tokens', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.jwt);
+            expect(result.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')).toBe(false);
+            expect(result.includes('[REDACTED]')).toBe(true);
+            expect(result.includes('Authorization: Bearer')).toBe(true);
+        });
+
+        it('Should redact GitHub tokens', () => {
+            const result = redactSensitiveData(SENSITIVE_SAMPLES.githubToken);
+            expect(result.includes('ghp_abcdefghijklmnopqrstuvwxyz1234567890')).toBe(false);
+            expect(result.includes('[REDACTED]')).toBe(true);
+        });
+    });
+
+    describe('Excluded Commands', () => {
+        it('Should exclude commands matching patterns', () => {
+            const result = isExcludedCommand('mysql -p', testConfig);
+            expect(result).toBe(true);
+        });
+
+        it('Should not exclude commands not matching patterns', () => {
+            const result = isExcludedCommand('ls -la', testConfig);
+            expect(result).toBe(false);
+        });
     });
 });

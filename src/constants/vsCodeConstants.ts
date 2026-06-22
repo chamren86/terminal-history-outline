@@ -20,12 +20,12 @@ export const VSCODE_SEQUENCES = [
 ];
 
 export const CONTEXT_VALUES = {
-    COMMAND_ITEM: 'commandItem',
+    HISTORY_ITEM: 'historyItem',
     OUTPUT_ITEM: 'outputItem'
 };
 
 export const VIEW_IDS = {
-    TERMINAL_HISTORY: 'terminalHistoryOutline'
+    TERMINAL_HISTORY: 'terminalHistory'
 };
 
 export const STATUS_BAR_ICON = 'history';

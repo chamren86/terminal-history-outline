@@ -1,28 +1,59 @@
-# Compiled output
-out/
-node_modules/
-
 # VS Code
-.vscode-test/
-*.vsix
-.vscode/.ropeproject
+.vscode/
+*.code-workspace
 
-# Logs
-*.log
+# Node.js
+node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# TypeScript
+*.tsbuildinfo
+out/
+*.js.map
+*.d.ts.map
 
 # OS files
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
 
-# TypeScript
-*.tsbuildinfo
+# Environment
+.env
+.env.local
+.env.*.local
 
-# Coverage
+# VS Code extensions
+*.vsix
+
+# Test coverage
 coverage/
+.nyc_output/
 
-# Test configuration (local only)
-test-mocha-config.json
+# Build artifacts
+dist/
+build/
+lib/
 
-ROADMAP/bin/
+# Ionide (F#) specific files
+*.fsi
+*.fsx
+*.fsscript
+*.fsproj.user
+*.fsproj.fsuser
+.fake/
+paket-files/
+.ionide/
+*.ionide.json
+*.ionide.fsx
+*.ionide.fsi
+*.ionide.fs
+
+# Logs
+logs/
+*.log
 ROADMAP/

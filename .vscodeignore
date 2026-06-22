@@ -1,61 +1,46 @@
-# Test files (not needed in production)
+# Exclude source files
+src/
+test/
+
+# Exclude compiled test files
+out/test/
 out/test/**
-src/test/**
-test/**
-*.test.js
-*.test.ts
+out/**/test/
+out/**/test/**
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
 
-# Development files (but keep node_modules dependencies)
-.git/**
-.vscode/**
-.vscode-test/**
-scripts/**
-!scripts/*.md
+# Exclude all map files
+*.map
+**/*.map
 
-# Exclude most of node_modules but keep strip-ansi
-node_modules/*
-!node_modules/strip-ansi
-!node_modules/strip-ansi/**/*
-!node_modules/ansi-regex
-!node_modules/ansi-regex/**/*
+# Exclude development files
+.git/
+.vscode/
+node_modules/
+package-lock.json
+tsconfig.json
+tsconfig.test.json
+vitest.config.ts
+eslint.config.mjs
+.vscode-test.mjs
+.nvmrc
+.gitignore
+.vscodeignore
 
-# Build outputs - include all out files
-out/**
-!out/extension.js
-!out/extension.js.map
-!out/cleaner.js
-!out/cleaner.js.map
-!out/security.js
-!out/security.js.map
-!out/privacyCommands.js
-!out/privacyCommands.js.map
-!out/terminalHistoryProvider.js
-!out/terminalHistoryProvider.js.map
-!out/commandHistoryItem.js
-!out/commandHistoryItem.js.map
-!out/constants/**/*.js
-!out/constants/**/*.js.map
-!out/enums/**/*.js
-!out/enums/**/*.js.map
-!out/interfaces/**/*.js
-!out/interfaces/**/*.js.map
+# Exclude documentation and scripts
+ROADMAP/
+docs/
+scripts/
+.github/
 
-# Documentation
+# Keep only what's necessary for the extension
+!package.json
 !README.md
 !LICENSE.md
-CHANGELOG.md
-RELEASE-NOTES.md
-ROADMAP/**
-docs/**
-
-# Temporary files
-*.log
-*.tmp
-.DS_Store
-
-# Binary files
-bin/
-*.vsix
-
-# Exclude source files from the package
-src/
+!out/**/*.js
+!out/constants/**
+!out/enums/**
+!out/interfaces/**

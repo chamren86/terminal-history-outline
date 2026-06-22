@@ -1,9 +1,9 @@
 # Terminal History Outline
 
-[![Version](https://img.shields.io/badge/version-0.4.4-blue.svg)](https://github.com/chamren86/terminal-history-outline)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/chamren86/terminal-history-outline)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.93%2B-blue.svg)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Download VSIX](https://img.shields.io/badge/download-.vsix-blue.svg)](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.4.4.vsix)
+[![Download VSIX](https://img.shields.io/badge/download-.vsix-blue.svg)](https://github.com/chamren86/terminal-history-outline/releases/latest/download/terminal-history-outline-0.5.0.vsix)
 
 View and manage your terminal command history directly in the VS Code Explorer outline view.
 

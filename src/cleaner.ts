@@ -39,3 +39,17 @@ export function cleanTerminalOutput(str: string): string {
     
     return cleaned.trim();
 }
+
+/**
+ * Check if a string contains ANSI escape codes
+ * 
+ * @param str - The string to check for ANSI codes
+ * @returns True if the string contains ANSI escape codes
+ */
+export function hasAnsiCodes(str: string): boolean {
+    if (!str) return false;
+    
+    // Match common ANSI escape sequences
+    const ansiPattern = /\x1b\[[0-9;]*[a-zA-Z]|\x1b[PX^_].*?\x1b\\|\x1b\[[0-9;]*[m]/;
+    return ansiPattern.test(str);
+}

@@ -5,6 +5,35 @@ All notable changes to the "terminal-history-outline" extension will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.5.0 - Usability & Productivity
+
+### 🚀 New Features
+
+- 📋 **Copy Command** - Copy the command text to clipboard
+- 📋 **Copy Command & Output** - Copy both the command and its output together
+- 🗑️ **Delete Entry** - Remove individual commands from history
+- 🔘 **Inline Action Buttons** - Quick access to actions directly on each entry
+
+### 🎨 Improvements
+
+- 🟢 **Colored Status Indicators** - 🟢 Success, 🔴 Error, 🟡 Running
+- ⏱️ **Time Ago Display** - Shows time since command execution (e.g., "2s", "5m", "3h")
+- 🔒 **Security Redaction** - Automatically detects and redacts sensitive data
+- 📊 **Privacy Dashboard** - View and manage security settings
+- 🧪 **57 Passing Tests** - Full test coverage for all features
+
+### 🏗️ Technical Changes
+
+- 🔄 **ESM Support** - Switched to modern ES modules
+- 📦 **Clean Packaging** - No security warnings in VSIX
+- 🔧 **Build Scripts** - Updated build and packaging process
+
+### 🔜 Future
+
+- 🔍 **Search/Filter** - Coming in a future update
+- 📁 **Groups & Organization** - Planned for v1.1.0
+- 🤖 **AI Integration** - Planned for v1.2.0
+
 ## v0.4.4 - Improved Exit Code Detection (2026-06-19)
 
 ### Added

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ES2022",
     "outDir": "out",
     "lib": ["ES2022"],
@@ -12,14 +12,14 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "mocha"]
+    "types": ["node", "vitest/globals"],
+    "resolveJsonModule": true,
+    "declaration": false,
+    "noEmitOnError": false,
+    "paths": {
+      "vscode": ["./src/test/mocks/vscode.ts"]
+    }
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".vscode-test",
-    "out"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", ".vscode-test", "out"]
 }

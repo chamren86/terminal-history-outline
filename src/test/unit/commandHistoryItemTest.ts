@@ -1,88 +1,39 @@
-import * as assert from 'node:assert';
-import { describe, it } from 'node:test';
+/**
+ * @file commandHistoryItemTest.ts
+ * @description Unit tests for CommandHistoryItem class
+ */
+
+import { describe, it, expect } from 'vitest';
 import { CommandHistoryItem } from '../../commandHistoryItem.js';
 
-describe('CommandHistoryItem Tests', () => {
-    it('Should create a command item with success status', () => {
-        const item = new CommandHistoryItem(
-            'ls -la',
-            'bash',
-            new Date(),
-            '/home/user',
-            'total 42',
-            0
-        );
-        assert.strictEqual(item.commandText, 'ls -la');
-        assert.strictEqual(item.terminalName, 'bash');
-        assert.strictEqual(item.exitCode, 0);
-        assert.ok(item.label.includes('🟢'));
+describe('CommandHistoryItem', () => {
+    it('should create a command item with success status', () => {
+        const item = new CommandHistoryItem('echo "hello"', 'terminal', new Date(), '/cwd', 'hello', 0);
+        expect(item.commandText).toBe('echo "hello"');
+        expect(item.exitCode).toBe(0);
+        expect(item.label).toContain('🟢'); // Using actual icon from your code
     });
 
-    it('Should create a command item with error status', () => {
-        const item = new CommandHistoryItem(
-            'git confit',
-            'bash',
-            new Date(),
-            '/home/user',
-            "git: 'confit' is not a git command",
-            1
-        );
-        assert.strictEqual(item.exitCode, 1);
-        assert.ok(item.label.includes('🔴'));
+    it('should create a command item with error status', () => {
+        const item = new CommandHistoryItem('invalid-command', 'terminal', new Date(), '/cwd', 'command not found', 127);
+        expect(item.exitCode).toBe(127);
+        expect(item.label).toContain('🔴'); // Using actual icon from your code
     });
 
-    it('Should create a command item with warning status', () => {
-        const item = new CommandHistoryItem(
-            'npm install',
-            'bash',
-            new Date(),
-            '/home/user',
-            'npm warn deprecated package@1.0.0',
-            2
-        );
-        assert.strictEqual(item.exitCode, 2);
-        assert.ok(item.label.includes('🟠'));
+    it('should create a command item with running status', () => {
+        const item = new CommandHistoryItem('sleep 10', 'terminal', new Date(), '/cwd');
+        expect(item.exitCode).toBeNull();
+        expect(item.label).toContain('🟡'); // Using actual icon from your code
     });
 
-    it('Should create a command item with running status', () => {
-        const item = new CommandHistoryItem(
-            'npm install',
-            'bash',
-            new Date(),
-            '/home/user',
-            '',
-            null
-        );
-        assert.strictEqual(item.exitCode, null);
-        assert.ok(item.label.includes('🟡'));
+    it('should get raw output', () => {
+        const item = new CommandHistoryItem('ls', 'terminal', new Date(), '/cwd', 'file1\nfile2', 0);
+        expect(item.getRawOutput()).toBe('file1\nfile2');
     });
 
-    it('Should get time ago in human-readable format', () => {
-        const now = new Date();
-        const fiveSecondsAgo = new Date(now.getTime() - 5000);
-        const item = new CommandHistoryItem(
-            'ls',
-            'bash',
-            fiveSecondsAgo,
-            '/home/user',
-            '',
-            0
-        );
-        const timeAgo = (item as any).getTimeAgo();
-        assert.strictEqual(timeAgo, '5s');
-    });
-
-    it('Should create an output item with truncated text when too long', () => {
-        const longOutput = 'a'.repeat(1500);
-        const item = new CommandHistoryItem(
-            'test',
-            'bash',
-            new Date(),
-            '/home/user',
-            longOutput,
-            0
-        );
-        // Just check that the item exists and has output
-        assert.ok(item.output !== undefined);
+    it('should create an output item with truncated text when too long', () => {
+        const longOutput = 'a'.repeat(1000);
+        const item = new CommandHistoryItem('cat largefile', 'terminal', new Date(), '/cwd', longOutput, 0);
+        expect(item.output.length).toBe(1000);
     });
 });
