@@ -1,5 +1,4 @@
-# .github/workflows/build.yml
-name: Build Terminal Velocity
+name: Test
 
 on:
   push:
@@ -10,19 +9,33 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      - run: npm ci
-      - run: npm run compile
-      - run: npm test
-      - name: Package Extension
-        run: npx vsce package
-      - name: Upload VSIX
-        uses: actions/upload-artifact@v4
-        with:
-          name: terminal-velocity
-          path: terminal-velocity-*.vsix
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile
+      run: npm run compile
+
+    - name: Run tests
+      run: npm test
+
+    - name: Package Extension
+      run: npx vsce package
+
+    - name: Upload VSIX
+      if: github.event_name == 'push' && github.repository_owner == 'chamren86' && env.ACTIONS_RUNTIME_TOKEN != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: terminal-velocity
+        path: terminal-velocity-*.vsix
+        retention-days: 30

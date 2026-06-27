@@ -32,7 +32,7 @@
     "test:unit": "vitest run --reporter=verbose",
     "test:full": "npm run clean && npm install && npm run compile && npm test",
     "test:coverage": "vitest run --coverage",
-    "precommit": "npm run test:unit",
+    "precommit": "./scripts/precommit.sh",
     "prepush": "npm run test:full",
     "clean": "rm -rf out node_modules",
     "quick": "./scripts/quick-test.sh",

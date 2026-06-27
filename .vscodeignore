@@ -1,46 +1,62 @@
-# Exclude source files
-src/
-test/
+# .vscodeignore
 
-# Exclude compiled test files
-out/test/
-out/test/**
-out/**/test/
-out/**/test/**
+# Exclude all test files and directories
+**/test/**
+**/tests/**
 **/*.test.js
 **/*.test.ts
 **/*.spec.js
 **/*.spec.ts
+**/*.test.js.map
+**/*.test.ts.map
 
-# Exclude all map files
-*.map
+# Exclude test output
+out/test/**
+out/**/*.test.js
+
+# Development files
+.vscode/**
+.vscode-test/**
+src/**
+scripts/**
 **/*.map
+**/*.ts
+**/*.tsx
 
-# Exclude development files
-.git/
-.vscode/
-node_modules/
-package-lock.json
+# Node modules (except vscode)
+node_modules/**
+!node_modules/vscode/**
+
+# Build and dev tools
+webpack.config.js
 tsconfig.json
 tsconfig.test.json
-vitest.config.ts
-eslint.config.mjs
-.vscode-test.mjs
-.nvmrc
-.gitignore
-.vscodeignore
+.eslintrc.json
+.prettierrc
+.actrc
+Dockerfile
 
-# Exclude documentation and scripts
-ROADMAP/
-docs/
-scripts/
-.github/
-
-# Keep only what's necessary for the extension
-!package.json
+# Documentation and examples
+docs/**
+examples/**
+*.md
 !README.md
-!LICENSE.md
-!out/**/*.js
-!out/constants/**
-!out/enums/**
-!out/interfaces/**
+CONTRIBUTING.md
+
+# CI/CD
+.github/**
+.gitignore
+.gitattributes
+
+# Logs and temp
+logs/**
+*.log
+*.tmp
+*.temp
+coverage/**
+.nyc_output/**
+.vscode-test/**
+
+# OS files
+.DS_Store
+Thumbs.db
