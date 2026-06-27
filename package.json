@@ -1,8 +1,9 @@
 {
-  "name": "terminal-velocity",
+  "name": "terminal-history-outline",
   "displayName": "Terminal Velocity",
   "description": "View and manage your terminal command history directly in the VS Code Explorer outline view.",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "publisher": "CoreyHamren",
   "repository": {
     "type": "git",
     "url": "https://github.com/chamren86/terminal-velocity.git"
@@ -12,15 +13,6 @@
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onCommand:terminalHistory.clear",
-    "onCommand:terminalHistory.rerun",
-    "onCommand:terminalHistory.copyCommand",
-    "onCommand:terminalHistory.copyOutput",
-    "onCommand:terminalHistory.deleteEntry",
-    "onCommand:terminalHistory.searchHistory",
-    "onView:terminalHistory"
   ],
   "main": "./out/extension.js",
   "type": "module",
@@ -42,7 +34,7 @@
   },
   "dependencies": {
     "ansi-regex": "^6.0.1",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.2.0"
   },
   "devDependencies": {
     "@types/node": "18.x",
@@ -58,7 +50,7 @@
         "title": "Clear Terminal History",
         "icon": "$(trash)"
       },
-            {
+      {
         "command": "terminalHistory.rerun",
         "title": "Rerun Command",
         "icon": "$(play)"
@@ -97,16 +89,11 @@
     "menus": {
       "view/title": [
         {
-          "command": "terminalHistory.searchHistory",
-          "group": "navigation",
-          "when": "view == terminalHistory"
-        },
-        {
           "command": "terminalHistory.clear",
           "group": "navigation",
           "when": "view == terminalHistory"
         },
-                {
+        {
           "command": "terminalHistory.privacyDashboard",
           "group": "navigation",
           "when": "view == terminalHistory"
@@ -140,13 +127,6 @@
         }
       ]
     },
-    "keybindings": [
-      {
-        "command": "terminalHistory.searchHistory",
-        "key": "ctrl+f",
-        "when": "view == terminalHistory && listFocus && !inputFocus"
-      }
-    ],
     "views": {
       "explorer": [
         {

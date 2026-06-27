@@ -1,6 +1,6 @@
 # .vscodeignore
 
-# Exclude all test files and directories
+# Exclude test files and directories
 **/test/**
 **/tests/**
 **/*.test.js
@@ -10,11 +10,7 @@
 **/*.test.js.map
 **/*.test.ts.map
 
-# Exclude test output
-out/test/**
-out/**/*.test.js
-
-# Development files
+# Exclude development files
 .vscode/**
 .vscode-test/**
 src/**
@@ -23,9 +19,12 @@ scripts/**
 **/*.ts
 **/*.tsx
 
-# Node modules (except vscode)
+# Exclude dev dependencies but include production dependencies
 node_modules/**
-!node_modules/vscode/**
+!node_modules/strip-ansi/**
+!node_modules/strip-ansi/**/*
+!node_modules/ansi-regex/**
+!node_modules/ansi-regex/**/*
 
 # Build and dev tools
 webpack.config.js
@@ -56,7 +55,3 @@ logs/**
 coverage/**
 .nyc_output/**
 .vscode-test/**
-
-# OS files
-.DS_Store
-Thumbs.db

@@ -36,6 +36,6 @@ jobs:
       if: github.event_name == 'push' && github.repository_owner == 'chamren86' && env.ACTIONS_RUNTIME_TOKEN != ''
       uses: actions/upload-artifact@v4
       with:
-        name: terminal-velocity
-        path: terminal-velocity-*.vsix
+        name: terminal-history-outline
+        path: terminal-history-outline-*.vsix
         retention-days: 30

@@ -45,7 +45,7 @@ vsce package
 ### 6. Install locally
 
 # Install the VSIX
-code --install-extension terminal-velocity-*.vsix --force
+code --install-extension terminal-history-outline*.vsix --force
 
 ## Project Structure
 
@@ -91,7 +91,7 @@ Make sure you're using the correct Node.js version (18+) and have installed all 
 3. Build: npm run compile
 4. Package: vsce package
 5. Create tag: git tag -a vX.X.X -m "Release vX.X.X"
-6. Create release: gh release create vX.X.X --title "vX.X.X" --notes-file RELEASE-NOTES.md terminal-velocity-X.X.X.vsix
+6. Create release: gh release create vX.X.X --title "vX.X.X" --notes-file RELEASE-NOTES.md terminal-history-outline-X.X.X.vsix
 
 ## License
 

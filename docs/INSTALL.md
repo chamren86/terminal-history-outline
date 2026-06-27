@@ -17,7 +17,7 @@ Download the latest `.vsix` file from:
 
 **Option B: Command Line**
 
-code --install-extension terminal-velocity-0.4.1.vsix
+code --install-extension terminal-history-outline-1.0.1.vsix
 
 **Option C: Drag and Drop**
 1. Open VS Code
