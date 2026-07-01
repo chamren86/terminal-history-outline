@@ -2,7 +2,7 @@
   "name": "terminal-history-outline",
   "displayName": "Terminal Velocity",
   "description": "View and manage your terminal command history directly in the VS Code Explorer outline view.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "CoreyHamren",
   "repository": {
     "type": "git",
